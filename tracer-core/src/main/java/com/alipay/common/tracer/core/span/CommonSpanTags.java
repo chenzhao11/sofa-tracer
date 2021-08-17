@@ -35,7 +35,7 @@ public class CommonSpanTags {
     public static final String REMOTE_APP              = "remote.app";
 
     /**
-     * CURRENT_THREAD_NAME records handler result
+     * RESULT_CODE records handler result
      */
     public static final String RESULT_CODE             = "result.code";
 

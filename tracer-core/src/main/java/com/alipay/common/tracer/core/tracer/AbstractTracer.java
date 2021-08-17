@@ -101,7 +101,7 @@ public abstract class AbstractTracer {
     protected abstract AbstractSofaTracerStatisticReporter generateServerStatReporter();
 
     /**
-     * Stage CS , This stage will produce a new span
+     * Stage CS , This stage will produc a new span
      * If there is a span in the current sofaTraceContext, it is the parent of the current Span
      *
      * @param operationName as span name
