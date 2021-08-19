@@ -38,9 +38,11 @@ public class SkywalkingSpanRemoteReporter implements SpanReportListener, Flushab
 
     @Override
     public void onSpanReport(SofaTracerSpan sofaTracerSpan) {
-//        SegmentObject segmentObject =  new SkywalkingSegmentAdapter().convertToSkywalkingSegment(sofaTracerSpan);
-        Segment segment = new SkywalkingSegmentAdapterNewer().convertToSkywalkingSegment(sofaTracerSpan);
-        SkywalkingRestTemplateSender sender = new SkywalkingRestTemplateSender(new RestTemplate(), "http://127.0.0.1:12800");
+        //        SegmentObject segmentObject =  new SkywalkingSegmentAdapter().convertToSkywalkingSegment(sofaTracerSpan);
+        Segment segment = new SkywalkingSegmentAdapterNewer()
+            .convertToSkywalkingSegment(sofaTracerSpan);
+        SkywalkingRestTemplateSender sender = new SkywalkingRestTemplateSender(new RestTemplate(),
+            "http://127.0.0.1:12800");
         sender.post(segment);
     }
 

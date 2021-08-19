@@ -222,6 +222,7 @@ public class FlexibleTracer extends SofaTracer {
         }
     }
 
+    //就算是重新开始中间的这些baggage也要留着
     private SofaTracerSpan errorSpan(Map<String, String> bizBaggage, Map<String, String> sysBaggage) {
         SofaTracerSpanContext spanContext = SofaTracerSpanContext.rootStart();
         spanContext.addBizBaggage(bizBaggage);

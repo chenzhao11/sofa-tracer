@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 package com.alipay.sofa.tracer.plugins.skywalking.sender;
+
 import com.alibaba.fastjson.JSON;
 import com.alipay.sofa.tracer.plugins.skywalking.utils.POJO.Segment;
 import com.alipay.sofa.tracer.plugins.skywalking.utils.SegmentObject2JSON;
@@ -30,17 +31,19 @@ import java.net.URI;
 public class SkywalkingRestTemplateSender {
     private RestTemplate restTemplate;
     private String       url;
+
     public SkywalkingRestTemplateSender(RestTemplate restTemplate, String baseUrl) {
         this.restTemplate = restTemplate;
         this.url = baseUrl + (baseUrl.endsWith("/") ? "" : "/") + "v3/segment";
     }
+
     public void post(SegmentObject segmentObject) {
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
         String json = SegmentObject2JSON.toJSONString(segmentObject);
 
         RequestEntity<String> requestEntity = new RequestEntity<String>(json, httpHeaders,
-                HttpMethod.POST, URI.create(this.url));
+            HttpMethod.POST, URI.create(this.url));
         this.restTemplate.exchange(requestEntity, String.class);
     }
 
@@ -49,7 +52,7 @@ public class SkywalkingRestTemplateSender {
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
         RequestEntity<String> requestEntity = new RequestEntity<String>(json, httpHeaders,
-                HttpMethod.POST, URI.create(this.url));
+            HttpMethod.POST, URI.create(this.url));
         this.restTemplate.exchange(requestEntity, String.class);
     }
 
@@ -59,7 +62,7 @@ public class SkywalkingRestTemplateSender {
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
         String json = JSON.toJSONString(segment);
         RequestEntity<String> requestEntity = new RequestEntity<String>(json, httpHeaders,
-                HttpMethod.POST, URI.create(this.url));
+            HttpMethod.POST, URI.create(this.url));
         this.restTemplate.exchange(requestEntity, String.class);
     }
 }

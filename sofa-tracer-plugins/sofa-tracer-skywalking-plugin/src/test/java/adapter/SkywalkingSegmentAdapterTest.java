@@ -16,12 +16,15 @@
  */
 package adapter;
 
+import com.alibaba.fastjson.JSON;
 import com.alipay.common.tracer.core.SofaTracer;
 import com.alipay.common.tracer.core.constants.ComponentNameConstants;
 import com.alipay.common.tracer.core.span.CommonSpanTags;
 import com.alipay.common.tracer.core.span.LogData;
 import com.alipay.common.tracer.core.span.SofaTracerSpan;
 import com.alipay.sofa.tracer.plugins.skywalking.adapter.SkywalkingSegmentAdapter;
+import com.alipay.sofa.tracer.plugins.skywalking.adapter.SkywalkingSegmentAdapterNewer;
+import com.alipay.sofa.tracer.plugins.skywalking.utils.POJO.Segment;
 import com.google.protobuf.Message;
 import com.google.protobuf.MessageOrBuilder;
 import com.google.protobuf.util.JsonFormat;
@@ -33,13 +36,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SkywalkingSegmentAdapterTest {
-    private SkywalkingSegmentAdapter adapter    = new SkywalkingSegmentAdapter();
+    private SkywalkingSegmentAdapterNewer adapter    = new SkywalkingSegmentAdapterNewer();
 
-    private final String             tracerType = ComponentNameConstants.DATA_SOURCE;
+    private final String                  tracerType = ComponentNameConstants.DATA_SOURCE;
 
-    private SofaTracer               sofaTracer;
+    private SofaTracer                    sofaTracer;
 
-    private SofaTracerSpan           sofaTracerSpan;
+    private SofaTracerSpan                sofaTracerSpan;
 
     @Before
     public void init() throws InterruptedException {
@@ -62,7 +65,7 @@ public class SkywalkingSegmentAdapterTest {
 
     @Test
     public void testConvertToSegment() {
-        SegmentObject segmentObject = adapter.convertToSkywalkingSegment(sofaTracerSpan);
-        System.out.println(segmentObject.toString());
+        Segment segment = adapter.convertToSkywalkingSegment(sofaTracerSpan);
+        System.out.println(JSON.toJSONString(segment));
     }
 }

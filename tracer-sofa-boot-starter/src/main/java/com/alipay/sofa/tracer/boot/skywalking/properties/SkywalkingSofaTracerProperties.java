@@ -14,12 +14,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alipay.sofa.tracer.plugins.skywalking.utils;
+package com.alipay.sofa.tracer.boot.skywalking.properties;
 
-import org.apache.skywalking.apm.network.language.agent.v3.SegmentObject;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 
-public class SegmentObject2JSON {
-    public static String toJSONString(SegmentObject segmentObject) {
-        return "";
+@ConfigurationProperties("com.alipay.sofa.tracer.skywalking")
+public class SkywalkingSofaTracerProperties {
+
+    private String  baseUrl = "http://localhost:12800/";
+    /**
+     * jaeger reporter is disabled by default
+     */
+    private boolean enabled = false;
+
+    public String getBaseUrl() {
+        return this.baseUrl;
     }
+
+    public boolean isEnabled() {
+        return this.enabled;
+    }
+
+    public void setBaseUrl(String baseUrl) {
+        this.baseUrl = baseUrl;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
 }

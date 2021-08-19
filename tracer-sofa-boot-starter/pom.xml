@@ -65,6 +65,10 @@
         </dependency>
         <dependency>
             <groupId>com.alipay.sofa</groupId>
+            <artifactId>sofa-tracer-skywalking-plugin</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.alipay.sofa</groupId>
             <artifactId>sofa-tracer-flexible-plugin</artifactId>
         </dependency>
         <dependency>

@@ -109,15 +109,20 @@ public abstract class AbstractTracer {
      */
     public SofaTracerSpan clientSend(String operationName) {
         SofaTraceContext sofaTraceContext = SofaTraceContextHolder.getSofaTraceContext();
+        //把traceContext中的父span弹出
         SofaTracerSpan serverSpan = sofaTraceContext.pop();
         SofaTracerSpan clientSpan = null;
         try {
+            //创建子Span
             clientSpan = (SofaTracerSpan) this.sofaTracer.buildSpan(operationName)
                 .asChildOf(serverSpan).start();
             // Need to actively cache your own serverSpan, because: asChildOf is concerned about spanContext
+            //把当前子span的父span缓存起来因为，因为现在把tracerContext中的父span取出来了
             clientSpan.setParentSofaTracerSpan(serverSpan);
             return clientSpan;
         } catch (Throwable throwable) {
+            //把父span中的baggage信息放到新创建的clientSpan中(创建clientSpan的时候抛出了异常，所以在内部重新使用SofaTracerSpanContext.rootStart()
+            //重新创建了一个全新的子span
             SelfLog.errorWithTraceId("Client Send Error And Restart by Root Span", throwable);
             SelfLog.flush();
             Map<String, String> bizBaggage = null;
@@ -128,6 +133,8 @@ public abstract class AbstractTracer {
             }
             clientSpan = this.errorRecover(bizBaggage, sysBaggage);
         } finally {
+
+            //不管是不是创建过程中发生异常都会创建一个span
             if (clientSpan != null) {
                 clientSpan.setTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT);
                 clientSpan.setTag(CommonSpanTags.CURRENT_THREAD_NAME, Thread.currentThread()
@@ -149,6 +156,7 @@ public abstract class AbstractTracer {
      */
     public void clientReceive(String resultCode) {
         SofaTraceContext sofaTraceContext = SofaTraceContextHolder.getSofaTraceContext();
+        //把clientSpan弹出，这时tracerContext是空
         SofaTracerSpan clientSpan = sofaTraceContext.pop();
         if (clientSpan == null) {
             return;
@@ -156,6 +164,7 @@ public abstract class AbstractTracer {
         // finish and to report
         this.clientReceiveTagFinish(clientSpan, resultCode);
         // restore parent span
+        // 把之前暂存起来的parent的信息取出来放回tracerContext中
         if (clientSpan.getParentSofaTracerSpan() != null) {
             sofaTraceContext.push(clientSpan.getParentSofaTracerSpan());
         }
@@ -187,6 +196,7 @@ public abstract class AbstractTracer {
      *
      * @return SofaTracerSpan
      */
+    //这种情况是指本身就是root肯定是没有父节点的
     public SofaTracerSpan serverReceive() {
         return this.serverReceive(null);
     }
@@ -196,16 +206,20 @@ public abstract class AbstractTracer {
      * @param sofaTracerSpanContext The context to restore
      * @return SofaTracerSpan
      */
+
+    //可以接受通过request传递过来的context数据
     public SofaTracerSpan serverReceive(SofaTracerSpanContext sofaTracerSpanContext) {
         SofaTracerSpan newSpan = null;
         // pop LogContext
         SofaTraceContext sofaTraceContext = SofaTraceContextHolder.getSofaTraceContext();
         SofaTracerSpan serverSpan = sofaTraceContext.pop();
         try {
+            // 如果traceContext中没有spanContext(本身就是当前的root了，如果context中有spanContext说明是其他线程或进程传递的)
             if (serverSpan == null) {
                 newSpan = (SofaTracerSpan) this.sofaTracer.buildSpan(StringUtils.EMPTY_STRING)
                     .asChildOf(sofaTracerSpanContext).start();
             } else {
+                //有传递过来的父span
                 newSpan = (SofaTracerSpan) this.sofaTracer.buildSpan(StringUtils.EMPTY_STRING)
                     .asChildOf(serverSpan).start();
             }
@@ -257,6 +271,7 @@ public abstract class AbstractTracer {
         }
     }
 
+    //主要用在异常处理中生成一个带有异常信息的span
     protected SofaTracerSpan genSeverSpanInstance(long startTime, String operationName,
                                                   SofaTracerSpanContext sofaTracerSpanContext,
                                                   Map<String, ?> tags) {

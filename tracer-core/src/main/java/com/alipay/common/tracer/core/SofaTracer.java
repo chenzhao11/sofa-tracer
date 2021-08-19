@@ -137,7 +137,9 @@ public class SofaTracer implements Tracer {
             span.getSofaTracerSpanContext().setSampled(sampler.sample(span).isSampled());
         }
         //invoke listener
+        //主要是数据上报到ZipKin的逻辑
         this.invokeReportListeners(span);
+        //下面是打印到log日志的逻辑
         if (span.isClient()
             || this.getTracerType().equalsIgnoreCase(ComponentNameConstants.FLEXIBLE)) {
             if (this.clientReporter != null) {
@@ -249,10 +251,12 @@ public class SofaTracer implements Tracer {
             if (!(referencedContext instanceof SofaTracerSpanContext)) {
                 return this;
             }
+            // 不是这两种关系中的任意一种不设置
             if (!References.CHILD_OF.equals(referenceType)
                 && !References.FOLLOWS_FROM.equals(referenceType)) {
                 return this;
             }
+            //如果当前的references是空的话，创建的不可变List中只包含指定的对象(只能含有一个对象)
             if (references.isEmpty()) {
                 // Optimization for 99% situations, when there is only one parent
                 references = Collections.singletonList(new SofaTracerSpanReferenceRelationship(
@@ -297,6 +301,7 @@ public class SofaTracer implements Tracer {
             SofaTracerSpanContext sofaTracerSpanContext;
             if (this.references != null && this.references.size() > 0) {
                 //Parent context exist
+                //可以接受从网络中传递的信息或stack中保存的
                 sofaTracerSpanContext = this.createChildContext();
             } else {
                 //Start with new root span context
@@ -340,8 +345,10 @@ public class SofaTracer implements Tracer {
         }
 
         private SofaTracerSpanContext createChildContext() {
+            // 取出reference中的第一个child_of
             SofaTracerSpanContext preferredReference = preferredReference();
 
+            //使用的是父Span的TraceId
             SofaTracerSpanContext sofaTracerSpanContext = new SofaTracerSpanContext(
                 preferredReference.getTraceId(), preferredReference.nextChildContextId(),
                 preferredReference.getSpanId(), preferredReference.isSampled());
@@ -352,6 +359,7 @@ public class SofaTracer implements Tracer {
 
         private Map<String, String> createChildBaggage(boolean isBiz) {
             // optimization for 99% use cases, when there is only one parent
+            //优化如果只有一个的话就不调用遍历直接取出。  baggage是需要在整个链路中传递的所以每次创建一个Span就需要赋值一次
             if (references.size() == 1) {
                 if (isBiz) {
                     return references.get(0).getSofaTracerSpanContext().getBizBaggage();
@@ -378,16 +386,20 @@ public class SofaTracer implements Tracer {
         }
 
         private SofaTracerSpanContext preferredReference() {
+            //取出refs中的第一个ref
             SofaTracerSpanReferenceRelationship preferredReference = references.get(0);
             for (SofaTracerSpanReferenceRelationship reference : references) {
                 // childOf takes precedence as a preferred parent
+                // 获取遍历对象的reftype
                 String referencedType = reference.getReferenceType();
+                //如果当前的Reference类型是CHILD_OF同时列表第一个元素的类型不是CHILD_OF就会选中当前这个reference   为什么这样做？？
                 if (References.CHILD_OF.equals(referencedType)
                     && !References.CHILD_OF.equals(preferredReference.getReferenceType())) {
                     preferredReference = reference;
                     break;
                 }
             }
+            //有CHILD_OF就选中第一个CHILD_OF ,没有CHILD_OF关系返回的是列表的第一个关系。
             return preferredReference.getSofaTracerSpanContext();
         }
     }

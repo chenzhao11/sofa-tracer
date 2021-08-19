@@ -80,6 +80,7 @@ public class SofaTracerSpan implements Span {
     /**
      * parent span. Describe the child-of relationship
      */
+    //同一个线程中有产生clientSpan的时候将父span暂存的位置
     private SofaTracerSpan                                  parentSofaTracerSpan = null;
 
     public SofaTracerSpan cloneInstance() {
@@ -164,6 +165,7 @@ public class SofaTracerSpan implements Span {
         this.setEndTime(endTime);
         //Key record:report span
         this.sofaTracer.reportSpan(this);
+        //调用所有拓展增强类的  logStoppedSpan方法
         SpanExtensionFactory.logStoppedSpan(this);
     }
 
@@ -464,6 +466,7 @@ public class SofaTracerSpan implements Span {
     }
 
     public boolean isClient() {
+        // Tags中的常量是OpenTracing中定义的一些常量
         return Tags.SPAN_KIND_CLIENT.equals(tagsWithStr.get(Tags.SPAN_KIND.getKey()));
     }
 

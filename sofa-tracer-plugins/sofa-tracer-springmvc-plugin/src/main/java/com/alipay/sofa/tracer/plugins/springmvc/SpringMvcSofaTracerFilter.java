@@ -139,6 +139,7 @@ public class SpringMvcSofaTracerFilter implements Filter {
             headers.put(key, value);
         }
         // Delay the initialization of the SofaTracerSpanContext to execute the serverReceive method
+        // 请求中要是不包含tracerMark就返回null说明自己就是root
         if (headers.isEmpty() || !isContainSofaTracerMark(headers)) {
             return null;
         }
@@ -154,6 +155,7 @@ public class SpringMvcSofaTracerFilter implements Filter {
      * @param headers
      * @return
      */
+    // 检查请求头中是否包含spanContext的traceId和spanId
     private boolean isContainSofaTracerMark(HashMap<String, String> headers) {
         return (headers.containsKey(AbstractTextB3Formatter.TRACE_ID_KEY_HEAD.toLowerCase()) || headers
             .containsKey(AbstractTextB3Formatter.TRACE_ID_KEY_HEAD))

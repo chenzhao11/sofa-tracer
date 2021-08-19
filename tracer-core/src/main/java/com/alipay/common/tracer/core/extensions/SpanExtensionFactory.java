@@ -29,6 +29,7 @@ import java.util.Set;
  */
 public class SpanExtensionFactory {
 
+    //保存所有Span的拓展增强类
     private static Set<SpanExtension> spanExtensions = new HashSet<SpanExtension>();
 
     static {

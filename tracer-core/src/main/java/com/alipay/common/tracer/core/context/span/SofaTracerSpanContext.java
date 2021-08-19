@@ -234,6 +234,7 @@ public class SofaTracerSpanContext implements SpanContext {
      * @param deserializeValue deserialize string, format: tcid:0,spid:1
      * @return SofaTracerSpanContext
      */
+
     public static SofaTracerSpanContext deserializeFromString(String deserializeValue) {
         if (StringUtils.isBlank(deserializeValue)) {
             return SofaTracerSpanContext.rootStart();
@@ -302,6 +303,7 @@ public class SofaTracerSpanContext implements SpanContext {
      *      2.This method cannot be called at will, the correct entry should be {@link SofaTracer.SofaTracerSpanBuilder#createRootSpanContext()}
      * @return root node
      */
+    //这个函数主要用来处理异常，当异常时直接创建一个新的spanContext来存放相关数据，比如baggage数据    AbstractTracer
     public static SofaTracerSpanContext rootStart() {
         return rootStart(false);
     }
