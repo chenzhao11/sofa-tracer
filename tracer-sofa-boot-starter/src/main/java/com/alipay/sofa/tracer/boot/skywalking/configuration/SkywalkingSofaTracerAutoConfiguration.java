@@ -39,7 +39,7 @@ public class SkywalkingSofaTracerAutoConfiguration {
     public SkywalkingSpanRemoteReporter skywalkingSpanRemoteReporter() {
         return new SkywalkingSpanRemoteReporter(skywalkingSofaTracerProperties.getBaseUrl(),
             skywalkingSofaTracerProperties.getMaxBufferSize(),
-            skywalkingSofaTracerProperties.getFlushInterval());
+            skywalkingSofaTracerProperties.getFlushIntervalMill());
     }
 
 }

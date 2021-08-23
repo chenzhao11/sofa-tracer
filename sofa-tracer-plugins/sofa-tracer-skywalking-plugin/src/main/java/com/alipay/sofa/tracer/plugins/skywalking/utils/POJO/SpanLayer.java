@@ -17,11 +17,9 @@
 package com.alipay.sofa.tracer.plugins.skywalking.utils.POJO;
 
 public enum SpanLayer {
-    //unknown在proto文件有但是jar包里面没??
-    //    UNKNOWN(0),  必须要小写？   Http MQ Database Unknown
-//    DB(1), RPC_FRAMEWORK(2), HTTP(3), MQ(4), CACHE(5);
 
-    DB(1), RPC_FRAMEWORK(2), HTTP(3), MQ(4), CACHE(5);
+    // 小写的原因是上传的时候需要使用小写
+    Unknown(0), Database(1), RPCFramework(2), Http(3), MQ(4), Cache(5);
 
     private int code;
 

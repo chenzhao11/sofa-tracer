@@ -22,21 +22,22 @@ import com.alipay.sofa.tracer.plugins.skywalking.utils.POJO.SpanLayer;
 import java.util.HashMap;
 
 public class ComponentName2SpanLayer {
+    // ComponentNameConstants不是Enum
     public static final HashMap<String, SpanLayer> map = new HashMap<>();
     static {
-        map.put(ComponentNameConstants.DATA_SOURCE, SpanLayer.DB);
-        map.put(ComponentNameConstants.DUBBO_CLIENT, SpanLayer.RPC_FRAMEWORK);
-        map.put(ComponentNameConstants.DUBBO_SERVER, SpanLayer.RPC_FRAMEWORK);
-        map.put(ComponentNameConstants.HTTP_CLIENT, SpanLayer.HTTP);
-        map.put(ComponentNameConstants.OK_HTTP, SpanLayer.HTTP);
-        map.put(ComponentNameConstants.REST_TEMPLATE, SpanLayer.HTTP);
-        map.put(ComponentNameConstants.SPRING_MVC, SpanLayer.HTTP);
+        map.put(ComponentNameConstants.DATA_SOURCE, SpanLayer.Database);
+        map.put(ComponentNameConstants.DUBBO_CLIENT, SpanLayer.RPCFramework);
+        map.put(ComponentNameConstants.DUBBO_SERVER, SpanLayer.RPCFramework);
+        map.put(ComponentNameConstants.HTTP_CLIENT, SpanLayer.Http);
+        map.put(ComponentNameConstants.OK_HTTP, SpanLayer.Http);
+        map.put(ComponentNameConstants.REST_TEMPLATE, SpanLayer.Http);
+        map.put(ComponentNameConstants.SPRING_MVC, SpanLayer.Http);
 
-        map.put(ComponentNameConstants.FLEXIBLE, SpanLayer.HTTP);
-        map.put(ComponentNameConstants.MSG_PUB, SpanLayer.RPC_FRAMEWORK);
-        map.put(ComponentNameConstants.MSG_SUB, SpanLayer.RPC_FRAMEWORK);
+        map.put(ComponentNameConstants.FLEXIBLE, SpanLayer.Http);
+        map.put(ComponentNameConstants.MSG_PUB, SpanLayer.RPCFramework);
+        map.put(ComponentNameConstants.MSG_SUB, SpanLayer.RPCFramework);
 
-        map.put(ComponentNameConstants.FEIGN_CLIENT, SpanLayer.HTTP);
+        map.put(ComponentNameConstants.FEIGN_CLIENT, SpanLayer.Http);
 
         map.put(ComponentNameConstants.KAFKAMQ_CONSUMER, SpanLayer.MQ);
         map.put(ComponentNameConstants.KAFKAMQ_SEND, SpanLayer.MQ);
@@ -46,7 +47,7 @@ public class ComponentName2SpanLayer {
         map.put(ComponentNameConstants.RABBITMQ_CONSUMER, SpanLayer.MQ);
         map.put(ComponentNameConstants.RABBITMQ_SEND, SpanLayer.MQ);
 
-        map.put(ComponentNameConstants.MONGO_CLIENT, SpanLayer.CACHE);
-        map.put(ComponentNameConstants.REDIS, SpanLayer.CACHE);
+        map.put(ComponentNameConstants.MONGO_CLIENT, SpanLayer.Cache);
+        map.put(ComponentNameConstants.REDIS, SpanLayer.Cache);
     }
 }

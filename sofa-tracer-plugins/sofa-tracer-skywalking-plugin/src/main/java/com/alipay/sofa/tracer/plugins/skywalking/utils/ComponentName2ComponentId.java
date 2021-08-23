@@ -25,6 +25,7 @@ import java.util.HashMap;
  * 是不是考虑使用一个yml类型的配置文件来代替
  */
 public class ComponentName2ComponentId {
+    //转换成EnumMap提高效率！！！  
     public static final HashMap<String, Integer> componentName2IDMap = new HashMap<>();
     static {
         //转换中componentName按照   SW中的Id参考https://github.com/apache/skywalking/blob/master/oap-server/server-bootstrap/src/main/resources/component-libraries.yml

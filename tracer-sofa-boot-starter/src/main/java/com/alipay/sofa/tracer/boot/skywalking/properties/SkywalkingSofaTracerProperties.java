@@ -29,7 +29,7 @@ public class SkywalkingSofaTracerProperties {
     //装segment的缓冲数组的大小
     private int     maxBufferSize = 10000;
     //上报segments的时间间隔 单位mm
-    private int     flushInterval = 200;
+    private int     flushIntervalMill = 200;
 
     public String getBaseUrl() {
         return this.baseUrl;
@@ -47,12 +47,12 @@ public class SkywalkingSofaTracerProperties {
         this.enabled = enabled;
     }
 
-    public void setFlushInterval(int interval) {
-        this.flushInterval = interval;
+    public void setFlushIntervalMill(int intervalMill) {
+        this.flushIntervalMill = intervalMill;
     }
 
-    public int getFlushInterval() {
-        return this.flushInterval;
+    public int getFlushIntervalMill() {
+        return this.flushIntervalMill;
     }
 
     public void setMaxBufferSize(int maxBufferSize) {

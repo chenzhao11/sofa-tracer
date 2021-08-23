@@ -18,8 +18,6 @@ package com.alipay.sofa.tracer.plugins.skywalking.sender;
 
 import com.alibaba.fastjson.JSON;
 import com.alipay.sofa.tracer.plugins.skywalking.utils.POJO.Segment;
-import com.alipay.sofa.tracer.plugins.skywalking.utils.SegmentObject2JSON;
-import org.apache.skywalking.apm.network.language.agent.v3.SegmentObject;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;

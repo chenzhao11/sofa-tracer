@@ -32,7 +32,7 @@ import java.util.Map;
 public class SkywalkingSpanRemoteReporterTest {
     private SkywalkingSpanRemoteReporter reporter;
 
-    private final String                 tracerType = ComponentNameConstants.DUBBO_CLIENT;
+    private final String                 tracerType = ComponentNameConstants.REDIS;
 
     private SofaTracer                   sofaTracer;
 
