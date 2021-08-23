@@ -37,7 +37,9 @@ public class SkywalkingSofaTracerAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     public SkywalkingSpanRemoteReporter skywalkingSpanRemoteReporter() {
-        return new SkywalkingSpanRemoteReporter();
+        return new SkywalkingSpanRemoteReporter(skywalkingSofaTracerProperties.getBaseUrl(),
+            skywalkingSofaTracerProperties.getMaxBufferSize(),
+            skywalkingSofaTracerProperties.getFlushInterval());
     }
 
 }

@@ -30,9 +30,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SkywalkingSpanRemoteReporterTest {
-    private SkywalkingSpanRemoteReporter reporter   = new SkywalkingSpanRemoteReporter();
+    private SkywalkingSpanRemoteReporter reporter;
 
-    private final String                 tracerType = ComponentNameConstants.DATA_SOURCE;
+    private final String                 tracerType = ComponentNameConstants.DUBBO_CLIENT;
 
     private SofaTracer                   sofaTracer;
 
@@ -40,10 +40,11 @@ public class SkywalkingSpanRemoteReporterTest {
 
     @Before
     public void init() throws InterruptedException {
+        reporter = new SkywalkingSpanRemoteReporter("http://127.0.0.1:12800", 10000, 100);
+
         sofaTracer = new SofaTracer.Builder(tracerType).withTag("tracer", "SofaTraceZipkinTest")
             .build();
-        sofaTracerSpan = (SofaTracerSpan) this.sofaTracer.buildSpan("http//hellozclalala.com")
-            .start();
+        sofaTracerSpan = (SofaTracerSpan) this.sofaTracer.buildSpan("http//asynictest.com").start();
         sofaTracerSpan.setTag("tagsStrkey", "tagsStrVal");
         sofaTracerSpan.setTag("tagsBooleankey", true);
         sofaTracerSpan.setTag("tagsBooleankey", 2018);

@@ -22,13 +22,25 @@ import java.util.HashMap;
 
 /**
  * 把SOFATracer中的ComponentName转换成SkyWalking中的ComponentId
+ * 是不是考虑使用一个yml类型的配置文件来代替
  */
 public class ComponentName2ComponentId {
     public static final HashMap<String, Integer> componentName2IDMap = new HashMap<>();
     static {
         //转换中componentName按照   SW中的Id参考https://github.com/apache/skywalking/blob/master/oap-server/server-bootstrap/src/main/resources/component-libraries.yml
         //关于数据库的类别需要从专门的tag中取得
+        componentName2IDMap.put("UNKNOWN", 0);
         componentName2IDMap.put(ComponentNameConstants.DATA_SOURCE, 0);
+
+        //需要根据tag database.type来自己转换的
+        //还有很多类型是没有写进来的，后面需要补全
+        componentName2IDMap.put("h2", 4);
+        componentName2IDMap.put("mysql", 5);
+        componentName2IDMap.put("oracle", 6);
+        componentName2IDMap.put("redis", 7);
+        componentName2IDMap.put("mongodb", 9);
+        componentName2IDMap.put("memcached", 20);
+
         //SW there is only dubbo
         componentName2IDMap.put(ComponentNameConstants.DUBBO_CLIENT, 3);
         componentName2IDMap.put(ComponentNameConstants.DUBBO_SERVER, 3);

@@ -18,13 +18,10 @@ package com.alipay.sofa.tracer.plugins.skywalking.utils.POJO;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.skywalking.apm.agent.core.context.trace.SpanLayer;
 import org.apache.skywalking.apm.network.language.agent.v3.SpanType;
 
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 @Getter
 @Setter

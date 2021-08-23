@@ -27,6 +27,7 @@ import org.springframework.http.RequestEntity;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
+import java.util.List;
 
 public class SkywalkingRestTemplateSender {
     private RestTemplate restTemplate;
@@ -34,18 +35,18 @@ public class SkywalkingRestTemplateSender {
 
     public SkywalkingRestTemplateSender(RestTemplate restTemplate, String baseUrl) {
         this.restTemplate = restTemplate;
-        this.url = baseUrl + (baseUrl.endsWith("/") ? "" : "/") + "v3/segment";
+        this.url = baseUrl + (baseUrl.endsWith("/") ? "" : "/") + "v3/segments";
     }
 
-    public void post(SegmentObject segmentObject) {
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-        String json = SegmentObject2JSON.toJSONString(segmentObject);
-
-        RequestEntity<String> requestEntity = new RequestEntity<String>(json, httpHeaders,
-            HttpMethod.POST, URI.create(this.url));
-        this.restTemplate.exchange(requestEntity, String.class);
-    }
+    //    public void post(SegmentObject segmentObject) {
+    //        HttpHeaders httpHeaders = new HttpHeaders();
+    //        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+    //        String json = SegmentObject2JSON.toJSONString(segmentObject);
+    //
+    //        RequestEntity<String> requestEntity = new RequestEntity<String>(json, httpHeaders,
+    //            HttpMethod.POST, URI.create(this.url));
+    //        this.restTemplate.exchange(requestEntity, String.class);
+    //    }
 
     //为了测试方便加上的
     public void post(String json) {
@@ -57,12 +58,24 @@ public class SkywalkingRestTemplateSender {
     }
 
     //测试自定义的POJO
-    public void post(Segment segment) {
+    public void post(List<Segment> segments) {
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-        String json = JSON.toJSONString(segment);
+        String json = JSON.toJSONString(segments);
         RequestEntity<String> requestEntity = new RequestEntity<String>(json, httpHeaders,
             HttpMethod.POST, URI.create(this.url));
+        //发送请求出错也不用处理？
+        this.restTemplate.exchange(requestEntity, String.class);
+    }
+
+    //测试自定义的POJO
+    public void post(Segment segments) {
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+        String json = JSON.toJSONString(segments);
+        RequestEntity<String> requestEntity = new RequestEntity<String>(json, httpHeaders,
+            HttpMethod.POST, URI.create(this.url));
+        //发送请求出错也不用处理？
         this.restTemplate.exchange(requestEntity, String.class);
     }
 }

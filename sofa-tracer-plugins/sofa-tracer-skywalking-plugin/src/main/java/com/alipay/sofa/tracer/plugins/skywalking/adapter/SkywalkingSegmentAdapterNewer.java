@@ -16,17 +16,18 @@
  */
 package com.alipay.sofa.tracer.plugins.skywalking.adapter;
 
+import com.alipay.common.tracer.core.constants.ComponentNameConstants;
 import com.alipay.common.tracer.core.constants.SofaTracerConstant;
 import com.alipay.common.tracer.core.span.CommonSpanTags;
 import com.alipay.common.tracer.core.span.LogData;
 import com.alipay.common.tracer.core.span.SofaTracerSpan;
 import com.alipay.common.tracer.core.utils.StringUtils;
 import com.alipay.sofa.tracer.plugins.skywalking.utils.ComponentName2ComponentId;
+import com.alipay.sofa.tracer.plugins.skywalking.utils.ComponentName2SpanLayer;
 import com.alipay.sofa.tracer.plugins.skywalking.utils.POJO.Log;
 import com.alipay.sofa.tracer.plugins.skywalking.utils.POJO.Segment;
 import com.alipay.sofa.tracer.plugins.skywalking.utils.POJO.SegmentReference;
 import com.alipay.sofa.tracer.plugins.skywalking.utils.POJO.Span;
-import org.apache.skywalking.apm.agent.core.context.trace.SpanLayer;
 import org.apache.skywalking.apm.network.language.agent.v3.RefType;
 import org.apache.skywalking.apm.network.language.agent.v3.SpanType;
 
@@ -41,7 +42,9 @@ public class SkywalkingSegmentAdapterNewer {
             return null;
         }
         Segment segment = new Segment();
-        segment.setTraceSegmentId(sofaTracerSpan.getSofaTracerSpanContext().getSpanId());
+        segment.setTraceSegmentId(sofaTracerSpan.getSofaTracerSpanContext().getTraceId()
+                                  + FNV64HashCode(sofaTracerSpan.getSofaTracerSpanContext()
+                                      .getSpanId()));
         segment.setTraceId(sofaTracerSpan.getSofaTracerSpanContext().getTraceId());
         segment.setSizeLimited(false);
         segment.setService(constructServiceName(sofaTracerSpan));
@@ -67,9 +70,11 @@ public class SkywalkingSegmentAdapterNewer {
             span.setSpanType(SpanType.Exit);
         }
         //怎么判断是哪一层的？？
-        span.setSpanLayer(SpanLayer.DB);
-        span.setComponentId(ComponentName2ComponentId.componentName2IDMap.get(sofaTracerSpan
-            .getSofaTracer().getTracerType()));
+        span.setSpanLayer(ComponentName2SpanLayer.map.get(sofaTracerSpan.getSofaTracer()
+            .getTracerType()));
+
+        //应该单独写一个函数获取componentId因为类型是datasource的时候需要根据database.type进一步判断
+        span.setComponentId(getComponentId(sofaTracerSpan));
         //??
         span.setError(isError(sofaTracerSpan));
         span.setSkipAnalysis(false);
@@ -131,19 +136,21 @@ public class SkywalkingSegmentAdapterNewer {
     }
 
     /**
-     * 构造ServiceInstanceName
+     * 构造ServiceInstanceName,可以考虑不传入sofaTracerSpan提高一点效率
      */
     private String constructServiceInstanceName(SofaTracerSpan sofaTracerSpan) {
         //目前只是通过机器的ip来构建实例，还可以有哪些其他的方式？？
         InetAddress localIpAddress = NetUtils.getLocalAddress();
-        return localIpAddress.getHostAddress();
+        return constructServiceName(sofaTracerSpan) + "@" + localIpAddress.getHostAddress();
     }
 
     /**
      * 获取parentSegmentId
      */
     private String getParentSegmentId(SofaTracerSpan sofaTracerSpan) {
-        return sofaTracerSpan.getSofaTracerSpanContext().getParentId();
+        //长度应该限制一下？但是长度限制的话可能有的segmentId一样会覆盖
+        return sofaTracerSpan.getSofaTracerSpanContext().getTraceId()
+               + FNV64HashCode(sofaTracerSpan.getSofaTracerSpanContext().getParentId());
     }
 
     /**
@@ -240,6 +247,44 @@ public class SkywalkingSegmentAdapterNewer {
             return host + ":" + port;
         }
         return null;
+    }
+
+    /**
+     * 获取tracerType对应的componentId
+     */
+    private int getComponentId(SofaTracerSpan sofaTracerSpan) {
+        String tracerType = sofaTracerSpan.getSofaTracer().getTracerType();
+        int componentId = ComponentName2ComponentId.componentName2IDMap.get("UNKNOWN");
+        if (StringUtils.isBlank(tracerType)) {
+            return componentId;
+        }
+        if (tracerType.equals(ComponentNameConstants.DATA_SOURCE)) {
+            String database = sofaTracerSpan.getTagsWithStr().get("database.type");
+            if (StringUtils.isBlank(database)) {
+                return componentId;
+            } else {
+                return ComponentName2ComponentId.componentName2IDMap.get(database);
+            }
+        }
+        return ComponentName2ComponentId.componentName2IDMap.get(sofaTracerSpan.getSofaTracer()
+            .getTracerType());
+    }
+
+    /**
+     * from http://en.wikipedia.org/wiki/Fowler_Noll_Vo_hash
+     *
+     * @param data String data
+     * @return fnv hash code
+     */
+    public static long FNV64HashCode(String data) {
+        //hash FNVHash64 : http://www.isthe.com/chongo/tech/comp/fnv/index.html#FNV-param
+        long hash = 0xcbf29ce484222325L;
+        for (int i = 0; i < data.length(); ++i) {
+            char c = data.charAt(i);
+            hash ^= c;
+            hash *= 0x100000001b3L;
+        }
+        return hash;
     }
 
 }

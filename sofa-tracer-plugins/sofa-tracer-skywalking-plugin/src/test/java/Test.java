@@ -20,6 +20,7 @@ import com.alipay.sofa.tracer.plugins.skywalking.utils.POJO.Segment;
 import com.alipay.sofa.tracer.plugins.skywalking.utils.POJO.SegmentReference;
 import com.alipay.sofa.tracer.plugins.skywalking.utils.POJO.Span;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Test {
@@ -44,7 +45,8 @@ public class Test {
         span.addTag("heljafldfla", "dasdfhash");
         segment.setService("測試");
         segment.addSpan(span);
-
-        System.out.println(JSON.toJSONString(segment));
+        List<Segment> segments = new ArrayList<>();
+        segments.add(segment);
+        System.out.println(JSON.toJSONString(segments));
     }
 }
