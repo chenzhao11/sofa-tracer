@@ -17,7 +17,7 @@
 package com.alipay.sofa.tracer.plugins.skywalking.utils;
 
 import com.alipay.common.tracer.core.constants.ComponentNameConstants;
-import com.alipay.sofa.tracer.plugins.skywalking.utils.POJO.SpanLayer;
+import com.alipay.sofa.tracer.plugins.skywalking.model.SpanLayer;
 
 import java.util.HashMap;
 
@@ -25,6 +25,9 @@ public class ComponentName2SpanLayer {
     // ComponentNameConstants不是Enum
     public static final HashMap<String, SpanLayer> map = new HashMap<>();
     static {
+
+        //为什么SofaRpc的tracertype 是RPC_TRACER？
+
         map.put(ComponentNameConstants.DATA_SOURCE, SpanLayer.Database);
         map.put(ComponentNameConstants.DUBBO_CLIENT, SpanLayer.RPCFramework);
         map.put(ComponentNameConstants.DUBBO_SERVER, SpanLayer.RPCFramework);
@@ -49,5 +52,6 @@ public class ComponentName2SpanLayer {
 
         map.put(ComponentNameConstants.MONGO_CLIENT, SpanLayer.Cache);
         map.put(ComponentNameConstants.REDIS, SpanLayer.Cache);
+        map.put(ComponentNameConstants.SOFA_RPC, SpanLayer.RPCFramework);
     }
 }

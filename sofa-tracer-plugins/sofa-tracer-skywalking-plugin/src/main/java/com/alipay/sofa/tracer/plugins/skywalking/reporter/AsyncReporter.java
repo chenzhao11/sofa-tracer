@@ -17,11 +17,10 @@
 package com.alipay.sofa.tracer.plugins.skywalking.reporter;
 
 import com.alipay.sofa.tracer.plugins.skywalking.sender.SkywalkingRestTemplateSender;
-import com.alipay.sofa.tracer.plugins.skywalking.utils.POJO.Segment;
-import org.apache.skywalking.apm.util.RunnableWithExceptionProtection;
+import com.alipay.sofa.tracer.plugins.skywalking.model.Segment;
 
 import java.io.Closeable;
-import java.io.Flushable;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,7 +30,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -78,16 +76,26 @@ public class AsyncReporter implements Closeable {
             public void run() {
                 boolean isClosed = closed.get();
                 List<Segment> segmentList = getAllSegments();
+
                 try {
                     //检查reporter是否关闭如果关闭就停止定时任务
                     if (isClosed) {
                         scheduler.shutdown();
                     }
                     //使用sender发送组装好的segment数据
-                    if (segmentList.isEmpty())
+                    if (segmentList.isEmpty()) {
                         return;
+                    }
+
                     //不用根据返回的情况看是否成功？
-                    sender.post(segmentList);
+                    System.out.println("reporter中进入sender：");
+                    // if fail,  add metric
+                    if (!sender.post(segmentList)) {
+                        //need to lock?
+                        segmentDroppedNum += segmentList.size();
+                    }
+                    ;
+                    System.out.println("reporter发送成功！");
                     segmentUplinkedNum += segmentList.size();
                 } catch (Exception e) {
                     logger.log(Level.WARNING, "Unexpected exception during sending segments", e);

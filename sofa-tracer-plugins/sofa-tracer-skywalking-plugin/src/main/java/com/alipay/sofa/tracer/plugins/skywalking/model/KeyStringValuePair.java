@@ -14,12 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alipay.sofa.tracer.plugins.skywalking.properties;
+package com.alipay.sofa.tracer.plugins.skywalking.model;
 
-public class SkywalkingProperties {
-    public static final String SKYWALKING_IS_ENABLED_KEY          = "com.alipay.sofa.tracer.skywalking.enabled";
-    public static final String SKYWALKING_BASE_URL_KEY            = "com.alipay.sofa.tracer.skywalking.baseUrl";
-    public static final String SKYWALKING_MAX_BUFFER_SIZE_KEY     = "com.alipay.sofa.tracer.skywalking.maxBufferSize";
-    public static final String SKYWALKING_FLUSH_INTERVAL_MILL_KEY = "com.alipay.sofa.tracer.skywalking.flushIntervalMill";
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
+@AllArgsConstructor
+public class KeyStringValuePair {
+    private String key;
+    private String value;
 }

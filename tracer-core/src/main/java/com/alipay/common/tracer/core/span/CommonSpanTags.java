@@ -16,6 +16,8 @@
  */
 package com.alipay.common.tracer.core.span;
 
+import io.opentracing.tag.Tags;
+
 /**
  * some common SpanTags
  * @author luoguimu123

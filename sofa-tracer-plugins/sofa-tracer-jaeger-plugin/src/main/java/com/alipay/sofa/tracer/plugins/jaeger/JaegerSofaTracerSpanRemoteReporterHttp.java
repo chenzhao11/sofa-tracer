@@ -1,0 +1,71 @@
+package com.alipay.sofa.tracer.plugins.jaeger;
+
+import com.alipay.common.tracer.core.configuration.SofaTracerConfiguration;
+import com.alipay.common.tracer.core.listener.SpanReportListener;
+import com.alipay.common.tracer.core.span.SofaTracerSpan;
+import com.alipay.sofa.tracer.plugins.jaeger.adapter.JaegerSpanAdapter;
+import com.alipay.sofa.tracer.plugins.jaeger.properties.JaegerProperties;
+import com.alipay.sofa.tracer.plugins.jaeger.utils.NetUtils;
+import io.jaegertracing.internal.JaegerTracer;
+import io.jaegertracing.internal.reporters.RemoteReporter;
+import io.jaegertracing.thrift.internal.senders.HttpSender;
+import org.apache.thrift.transport.TTransportException;
+
+import java.io.Closeable;
+import java.io.IOException;
+
+public class JaegerSofaTracerSpanRemoteReporterHttp implements SpanReportListener, Closeable {
+    private JaegerSpanAdapter adapter = new JaegerSpanAdapter();
+    private HttpSender         jaegerHttpSender;
+    private RemoteReporter    reporter;
+    private JaegerTracer      jaegerTracer;
+
+    public JaegerSofaTracerSpanRemoteReporterHttp(String host, int port, int maxPacketSize,
+                                                  String serviceName) throws TTransportException {
+        //user compact thrift protocol by default
+        jaegerHttpSender = new HttpSender.Builder("http://127.0.0.1:14268/api/traces").build();
+
+        //Use the configuration file named sofa.tracer.properties to configure the command queue in jaeger
+        //The interval of writing FlushCommand to the command queue
+        Integer flushInterval = SofaTracerConfiguration.getIntegerDefaultIfNull(
+                JaegerProperties.JAEGER_AGENT_FLUSH_INTERVAL_MS_KEY, 1000);
+        // size of the command queue is too large will waste space, and too small will cause the span to be lost
+        Integer maxQueueSize = SofaTracerConfiguration.getIntegerDefaultIfNull(
+                JaegerProperties.JAEGER_AGENT_MAX_QUEUE_SIZE_KEY, 100);
+        //Timeout for writing CloseCommand
+        Integer closeEnqueueTimeout = SofaTracerConfiguration.getIntegerDefaultIfNull(
+                JaegerProperties.JAEGER_AGENT_CLOSE_ENQUEUE_TIMEOUT_MILLIS_KEY, 1000);
+
+        reporter = new RemoteReporter.Builder().withSender(jaegerHttpSender)
+                .withFlushInterval(flushInterval).withMaxQueueSize(maxQueueSize)
+                .withCloseEnqueueTimeout(closeEnqueueTimeout).build();
+
+        jaegerTracer = new JaegerTracer.Builder(serviceName).withReporter(reporter)
+                .withTraceId128Bit().withTag("ip", NetUtils.getLocalIpv4()).build();
+
+    }
+
+    @Override
+    public void onSpanReport(SofaTracerSpan sofaTracerSpan) {
+        if (sofaTracerSpan == null || !sofaTracerSpan.getSofaTracerSpanContext().isSampled()) {
+            return;
+        }
+        // the sender in jaegerTracer will send the input sofaTracerSpan according to the setting
+        adapter.convertAndReport(sofaTracerSpan, jaegerTracer);
+    }
+
+    @Override
+    public void close() throws IOException {
+        //close jaegerTracer and it will close reporter internal
+        this.jaegerTracer.close();
+    }
+
+    public RemoteReporter getReporter() {
+        return this.reporter;
+    }
+
+    public JaegerTracer getJaegerTracer() {
+        return this.jaegerTracer;
+    }
+
+}

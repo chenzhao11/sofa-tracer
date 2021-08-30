@@ -41,6 +41,7 @@ public class ComponentName2ComponentId {
         componentName2IDMap.put("redis", 7);
         componentName2IDMap.put("mongodb", 9);
         componentName2IDMap.put("memcached", 20);
+        componentName2IDMap.put("SOFARPC", 43);
 
         //SW there is only dubbo
         componentName2IDMap.put(ComponentNameConstants.DUBBO_CLIENT, 3);

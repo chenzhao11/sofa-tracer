@@ -23,12 +23,8 @@ import com.alipay.common.tracer.core.span.CommonSpanTags;
 import com.alipay.common.tracer.core.span.LogData;
 import com.alipay.common.tracer.core.span.SofaTracerSpan;
 import com.alipay.sofa.tracer.plugins.skywalking.adapter.SkywalkingSegmentAdapter;
-import com.alipay.sofa.tracer.plugins.skywalking.adapter.SkywalkingSegmentAdapterNewer;
-import com.alipay.sofa.tracer.plugins.skywalking.utils.POJO.Segment;
-import com.google.protobuf.Message;
-import com.google.protobuf.MessageOrBuilder;
-import com.google.protobuf.util.JsonFormat;
-import org.apache.skywalking.apm.network.language.agent.v3.SegmentObject;
+import com.alipay.sofa.tracer.plugins.skywalking.model.Segment;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -36,13 +32,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SkywalkingSegmentAdapterTest {
-    private SkywalkingSegmentAdapterNewer adapter    = new SkywalkingSegmentAdapterNewer();
+    private SkywalkingSegmentAdapter adapter    = new SkywalkingSegmentAdapter();
 
-    private final String                  tracerType = ComponentNameConstants.DATA_SOURCE;
+    private final String             tracerType = ComponentNameConstants.DATA_SOURCE;
 
-    private SofaTracer                    sofaTracer;
+    private SofaTracer               sofaTracer;
 
-    private SofaTracerSpan                sofaTracerSpan;
+    private SofaTracerSpan           sofaTracerSpan;
 
     @Before
     public void init() throws InterruptedException {

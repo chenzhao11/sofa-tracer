@@ -61,4 +61,6 @@ public class ComponentNameConstants {
 
     public static final String REDIS             = "redis";
 
+    public static final String SOFA_RPC          = "RPC_TRACER";
+
 }

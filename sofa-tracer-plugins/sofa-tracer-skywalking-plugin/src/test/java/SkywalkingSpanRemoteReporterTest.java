@@ -20,9 +20,8 @@ import com.alipay.common.tracer.core.span.CommonSpanTags;
 import com.alipay.common.tracer.core.span.LogData;
 import com.alipay.common.tracer.core.span.SofaTracerSpan;
 import com.alipay.sofa.tracer.plugins.skywalking.SkywalkingSpanRemoteReporter;
-import com.alipay.sofa.tracer.plugins.skywalking.adapter.SkywalkingSegmentAdapter;
+
 import io.opentracing.tag.Tags;
-import org.apache.skywalking.apm.network.language.agent.v3.SegmentObject;
 import org.junit.Before;
 import org.junit.Test;
 

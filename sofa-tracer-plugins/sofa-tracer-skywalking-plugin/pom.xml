@@ -26,11 +26,11 @@
             <artifactId>spring-web</artifactId>
         </dependency>
         <!-- skyWalking optional : add manually -->
-        <dependency>
-            <groupId>org.apache.skywalking</groupId>
-            <artifactId>apm-agent-core</artifactId>
-            <version>8.6.0</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.apache.skywalking</groupId>-->
+<!--            <artifactId>apm-agent-core</artifactId>-->
+<!--            <version>8.6.0</version>-->
+<!--        </dependency>-->
 
         <dependency>
             <groupId>com.alipay.sofa</groupId>

@@ -17,14 +17,11 @@
 package sender;
 
 import com.alipay.sofa.tracer.plugins.skywalking.sender.SkywalkingRestTemplateSender;
-import com.alipay.sofa.tracer.plugins.skywalking.utils.POJO.Segment;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 public class SkywalkingRestTemplateSenderTest {
     String                       data;

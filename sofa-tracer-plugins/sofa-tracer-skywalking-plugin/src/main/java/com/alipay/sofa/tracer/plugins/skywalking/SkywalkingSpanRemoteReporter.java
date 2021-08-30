@@ -19,29 +19,23 @@ package com.alipay.sofa.tracer.plugins.skywalking;
 import com.alipay.common.tracer.core.listener.SpanReportListener;
 import com.alipay.common.tracer.core.span.SofaTracerSpan;
 import com.alipay.sofa.tracer.plugins.skywalking.adapter.SkywalkingSegmentAdapter;
-import com.alipay.sofa.tracer.plugins.skywalking.adapter.SkywalkingSegmentAdapterNewer;
 import com.alipay.sofa.tracer.plugins.skywalking.reporter.AsyncReporter;
 import com.alipay.sofa.tracer.plugins.skywalking.sender.SkywalkingRestTemplateSender;
-import com.alipay.sofa.tracer.plugins.skywalking.utils.POJO.Segment;
-import org.apache.skywalking.apm.agent.core.context.trace.AbstractTracingSpan;
-import org.apache.skywalking.apm.agent.core.context.trace.EntrySpan;
-import org.apache.skywalking.apm.agent.core.context.trace.ExitSpan;
-import org.apache.skywalking.apm.agent.core.context.trace.TraceSegment;
-import org.apache.skywalking.apm.network.language.agent.v3.SegmentObject;
+import com.alipay.sofa.tracer.plugins.skywalking.model.Segment;
+
 import org.springframework.web.client.RestTemplate;
 
 import java.io.Closeable;
-import java.io.Flushable;
 import java.io.IOException;
 
 public class SkywalkingSpanRemoteReporter implements SpanReportListener, Closeable {
     // 三个需要转换的对象  TraceSegment ExitSpan EntrySpan
-    private AsyncReporter                 reporter;
-    private SkywalkingRestTemplateSender  sender;
-    private SkywalkingSegmentAdapterNewer adapter;
+    private AsyncReporter                reporter;
+    private SkywalkingRestTemplateSender sender;
+    private SkywalkingSegmentAdapter     adapter;
 
     public SkywalkingSpanRemoteReporter(String baseUrl, int maxBufferSize, int flushInterval) {
-        adapter = new SkywalkingSegmentAdapterNewer();
+        adapter = new SkywalkingSegmentAdapter();
         sender = new SkywalkingRestTemplateSender(new RestTemplate(), baseUrl);
         reporter = new AsyncReporter(maxBufferSize, sender, flushInterval);
     }

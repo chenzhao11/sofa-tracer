@@ -14,20 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alipay.sofa.tracer.plugins.skywalking.utils.POJO;
+package com.alipay.sofa.tracer.plugins.skywalking.model;
 
-public enum SpanLayer {
+public enum SpanType {
+    Entry(0), Exit(1), Local(2), UNRECOGNIZED(-1);
+    private int id;
 
-    // 小写的原因是上传的时候需要使用小写
-    Unknown(0), Database(1), RPCFramework(2), Http(3), MQ(4), Cache(5);
-
-    private int code;
-
-    private SpanLayer(int code) {
-        this.code = code;
-    }
-
-    public int getCode() {
-        return this.code;
+    SpanType(int id) {
+        this.id = id;
     }
 }

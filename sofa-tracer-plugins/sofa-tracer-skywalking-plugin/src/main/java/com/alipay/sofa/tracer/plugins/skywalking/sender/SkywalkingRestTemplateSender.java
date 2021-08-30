@@ -17,15 +17,14 @@
 package com.alipay.sofa.tracer.plugins.skywalking.sender;
 
 import com.alibaba.fastjson.JSON;
-import com.alipay.sofa.tracer.plugins.skywalking.utils.POJO.Segment;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.RequestEntity;
+import com.alipay.sofa.tracer.plugins.skywalking.reporter.AsyncReporter;
+import com.alipay.sofa.tracer.plugins.skywalking.model.Segment;
+import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class SkywalkingRestTemplateSender {
     private RestTemplate restTemplate;
@@ -56,14 +55,28 @@ public class SkywalkingRestTemplateSender {
     }
 
     //测试自定义的POJO
-    public void post(List<Segment> segments) {
+    public boolean post(List<Segment> segments) {
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+
         String json = JSON.toJSONString(segments);
+        System.out.println("需要发送的segment是" + json);
+
         RequestEntity<String> requestEntity = new RequestEntity<String>(json, httpHeaders,
             HttpMethod.POST, URI.create(this.url));
         //发送请求出错也不用处理？
-        this.restTemplate.exchange(requestEntity, String.class);
+
+        Logger logger = Logger.getLogger(AsyncReporter.class.getName());
+        logger.warning("开始发送信息");
+        ResponseEntity<String> response = this.restTemplate.exchange(requestEntity, String.class);
+        if (response.getStatusCode() != HttpStatus.OK) {
+            return false;
+        }
+
+        logger.warning(response.toString());
+        logger.warning(response.getStatusCodeValue() + "");
+        return true;
+
     }
 
     //测试自定义的POJO

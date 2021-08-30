@@ -21,13 +21,13 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties("com.alipay.sofa.tracer.skywalking")
 public class SkywalkingSofaTracerProperties {
 
-    private String  baseUrl       = "http://localhost:12800/";
+    private String  baseUrl           = "http://localhost:12800/";
     /**
      * jaeger reporter is disabled by default
      */
-    private boolean enabled       = false;
+    private boolean enabled           = false;
     //装segment的缓冲数组的大小
-    private int     maxBufferSize = 10000;
+    private int     maxBufferSize     = 10000;
     //上报segments的时间间隔 单位mm
     private int     flushIntervalMill = 200;
 

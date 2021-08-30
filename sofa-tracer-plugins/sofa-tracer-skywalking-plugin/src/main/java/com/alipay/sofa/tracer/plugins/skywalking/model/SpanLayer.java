@@ -14,16 +14,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alipay.sofa.tracer.plugins.skywalking.utils.POJO;
+package com.alipay.sofa.tracer.plugins.skywalking.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+public enum SpanLayer {
 
-@Getter
-@Setter
-@AllArgsConstructor
-public class KeyStringValuePair {
-    private String key;
-    private String value;
+    // 小写的原因是上传的时候需要使用小写
+    Unknown(0), Database(1), RPCFramework(2), Http(3), MQ(4), Cache(5);
+
+    private int code;
+
+    private SpanLayer(int code) {
+        this.code = code;
+    }
+
+    public int getCode() {
+        return this.code;
+    }
 }
