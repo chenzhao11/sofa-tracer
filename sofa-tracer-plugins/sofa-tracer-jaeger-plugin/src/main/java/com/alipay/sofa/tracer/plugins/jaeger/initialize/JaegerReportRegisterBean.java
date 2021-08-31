@@ -32,6 +32,15 @@ public class JaegerReportRegisterBean implements InitializingBean {
     @Override
     public void afterPropertiesSet() throws TTransportException {
 
+        //Use the configuration file named sofa.tracer.properties to configure the command queue in jaeger
+        //The interval of writing FlushCommand to the command queue
+        int flushInterval = SofaTracerConfiguration.getIntegerDefaultIfNull(JaegerProperties.JAEGER_AGENT_FLUSH_INTERVAL_MS_KEY, 1000);
+        // size of the command queue is too large will waste space, and too small will cause the span to be lost
+        int maxQueueSize = SofaTracerConfiguration.getIntegerDefaultIfNull(JaegerProperties.JAEGER_AGENT_MAX_QUEUE_SIZE_KEY, 100);
+        //Timeout for writing CloseCommand
+        int closeEnqueueTimeout = SofaTracerConfiguration.getIntegerDefaultIfNull(JaegerProperties.JAEGER_AGENT_CLOSE_ENQUEUE_TIMEOUT_MILLIS_KEY, 1000);
+
+
         boolean enabled = false;
         String enabledStr = SofaTracerConfiguration
             .getProperty(JaegerProperties.JAEGER_AGENT_IS_ENABLED_KEY);

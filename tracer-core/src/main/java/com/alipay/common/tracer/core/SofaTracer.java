@@ -137,9 +137,7 @@ public class SofaTracer implements Tracer {
             span.getSofaTracerSpanContext().setSampled(sampler.sample(span).isSampled());
         }
         //invoke listener
-        //主要是数据上报到ZipKin的逻辑
         this.invokeReportListeners(span);
-        //下面是打印到log日志的逻辑
         if (span.isClient()
             || this.getTracerType().equalsIgnoreCase(ComponentNameConstants.FLEXIBLE)) {
             if (this.clientReporter != null) {

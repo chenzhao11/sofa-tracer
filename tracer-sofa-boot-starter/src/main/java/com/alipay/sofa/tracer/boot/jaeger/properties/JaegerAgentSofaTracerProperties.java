@@ -38,6 +38,41 @@ public class JaegerAgentSofaTracerProperties {
      */
     private int     maxPacketSize = 65000;
 
+
+    /**
+     *The interval of writing FlushCommand to the command queue
+     */
+
+    private int flushIntervalMill = 1000;
+    /**
+     * size of the command queue is too large will waste space, and too small will cause the span to be lost
+     */
+    private Integer maxQueueSize = 10000;
+    /**
+     * Timeout for writing CloseCommand
+     */
+    private Integer closeEnqueueTimeoutMill =  1000;
+
+
+    public int getFlushIntervalMill(){
+        return this.closeEnqueueTimeoutMill;
+    }
+    public void setFlushIntervalMill(int flushIntervalMill){
+        this.flushIntervalMill =flushIntervalMill;
+    }
+    public int getMaxQueueSize(){
+        return this.maxQueueSize;
+    }
+    public void setMaxQueueSize(int maxQueueSize){
+        this.maxQueueSize = maxQueueSize;
+    }
+    public void setCloseEnqueueTimeoutMill(int closeEnqueueTimeoutMill){
+        this.closeEnqueueTimeoutMill = closeEnqueueTimeoutMill;
+    }
+    public int getCloseEnqueueTimeoutMill(){
+        return this.closeEnqueueTimeoutMill;
+    }
+
     public String getHost() {
         return this.host;
     }

@@ -50,7 +50,7 @@ public class JaegerAgentSofaTracerAutoConfiguration {
     public JaegerSofaTracerSpanRemoteReporter jaegerAgentSofaTracerSpanReporter()
                                                                                  throws TTransportException {
         return new JaegerSofaTracerSpanRemoteReporter(jaegerAgentProperties.getHost(),
-            jaegerAgentProperties.getPort(), jaegerAgentProperties.getMaxPacketSize(), serviceName);
+            jaegerAgentProperties.getPort(), jaegerAgentProperties.getMaxPacketSize(), serviceName, jaegerAgentProperties.getFlushIntervalMill(), jaegerAgentProperties.getMaxQueueSize(), jaegerAgentProperties.getCloseEnqueueTimeoutMill());
     }
 
 }

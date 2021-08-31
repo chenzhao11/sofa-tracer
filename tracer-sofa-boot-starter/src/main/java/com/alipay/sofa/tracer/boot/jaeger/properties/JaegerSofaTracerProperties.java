@@ -16,22 +16,58 @@
  */
 package com.alipay.sofa.tracer.boot.jaeger.properties;
 
+import com.alipay.common.tracer.core.configuration.SofaTracerConfiguration;
+import com.alipay.sofa.tracer.plugins.jaeger.properties.JaegerProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties("com.alipay.sofa.tracer.jaeger")
 public class JaegerSofaTracerProperties {
     /**
-     * URL of the jaeger collector.
+     * jaeger-collector HTTP endpoint
      */
-    private String  baseUrl = "http://localhost:9411/";
+    private String  baseUrl = "http://localhost:14268/";
     /**
      * jaeger reporter is disabled by default
      */
     private boolean enabled = false;
+
     /**
-     * When enabled, spans are gzipped before sent to the jaeger server
+     * the max packet size in default it is 2MB
      */
-    private boolean gzipped = false;
+    private int maxPacketSizeBytes = 2 * 1024 * 1024;
+    /**
+     *The interval of writing FlushCommand to the command queue
+     */
+
+    private int flushIntervalMill = 1000;
+    /**
+     * size of the command queue is too large will waste space, and too small will cause the span to be lost
+     */
+    private Integer maxQueueSize = 10000;
+    /**
+     * Timeout for writing CloseCommand
+     */
+    private Integer closeEnqueueTimeoutMill =  1000;
+
+
+    public int getFlushIntervalMill(){
+        return this.closeEnqueueTimeoutMill;
+    }
+    public void setFlushIntervalMill(int flushIntervalMill){
+        this.flushIntervalMill =flushIntervalMill;
+    }
+    public int getMaxQueueSize(){
+        return this.maxQueueSize;
+    }
+    public void setMaxQueueSize(int maxQueueSize){
+        this.maxQueueSize = maxQueueSize;
+    }
+    public void setCloseEnqueueTimeoutMill(int closeEnqueueTimeoutMill){
+        this.closeEnqueueTimeoutMill = closeEnqueueTimeoutMill;
+    }
+    public int getCloseEnqueueTimeoutMill(){
+        return this.closeEnqueueTimeoutMill;
+    }
 
     public String getBaseUrl() {
         return this.baseUrl;
@@ -49,12 +85,14 @@ public class JaegerSofaTracerProperties {
         this.enabled = enabled;
     }
 
-    public boolean isGzipped() {
-        return gzipped;
+    public int getmaxPacketSizeBytes(){
+        return this.maxPacketSizeBytes;
     }
 
-    public void setGzipped(boolean gzipped) {
-        this.gzipped = gzipped;
+    public void setMaxPacketSizeBytes(int maxPacketSizeBytes){
+        this.maxPacketSizeBytes = maxPacketSizeBytes;
     }
+
+
 
 }
