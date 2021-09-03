@@ -32,13 +32,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * report jaeger.thrift data to the jaeger agent
+ * report jaeger.thrift to collector directly
  */
+
 @Configuration
 @EnableConfigurationProperties(JaegerSofaTracerProperties.class)
-@ConditionalOnProperty(value = "com.alipay.sofa.tracer.jaeger.agentEnabled", matchIfMissing = false)
+@ConditionalOnProperty(value = "com.alipay.sofa.tracer.jaeger.enabled", matchIfMissing = false)
 @ConditionalOnClass({ JaegerSpan.class, JaegerTracer.class, JaegerSpanContext.class })
-public class JaegerAgentSofaTracerAutoConfiguration {
+public class JaegerSofaTracerAutoConfiguration {
     @Autowired
     private JaegerSofaTracerProperties jaegerProperties;
 
@@ -47,6 +48,18 @@ public class JaegerAgentSofaTracerAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
+    @ConditionalOnProperty(value = "com.alipay.sofa.tracer.jaeger.receiver", havingValue = "collector", matchIfMissing = false)
+    public JaegerSofaTracerSpanRemoteReporter jaegerSofaTracerSpanRemoteReporter()
+                                                                                  throws TTransportException {
+        return new JaegerSofaTracerSpanRemoteReporter(jaegerProperties.getCollectorBaseUrl(),
+            jaegerProperties.getCollectorMaxPacketSizeBytes(), serviceName,
+            jaegerProperties.getFlushIntervalMill(), jaegerProperties.getMaxQueueSize(),
+            jaegerProperties.getCloseEnqueueTimeoutMill());
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    @ConditionalOnProperty(value = "com.alipay.sofa.tracer.jaeger.receiver", havingValue = "agent", matchIfMissing = false)
     public JaegerSofaTracerSpanRemoteReporter jaegerAgentSofaTracerSpanReporter()
                                                                                  throws TTransportException {
         return new JaegerSofaTracerSpanRemoteReporter(jaegerProperties.getAgentHost(),
@@ -54,5 +67,4 @@ public class JaegerAgentSofaTracerAutoConfiguration {
             serviceName, jaegerProperties.getFlushIntervalMill(),
             jaegerProperties.getMaxQueueSize(), jaegerProperties.getCloseEnqueueTimeoutMill());
     }
-
 }

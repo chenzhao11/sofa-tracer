@@ -35,23 +35,31 @@ public class JaegerReportRegisterBean implements InitializingBean {
         //Use the configuration file named sofa.tracer.properties to configure the command queue in jaeger
         //The interval of writing FlushCommand to the command queue
         int flushInterval = SofaTracerConfiguration.getIntegerDefaultIfNull(
-            JaegerProperties.JAEGER_AGENT_FLUSH_INTERVAL_MS_KEY, 1000);
+            JaegerProperties.JAEGER_FLUSH_INTERVAL_MS_KEY, 1000);
         // size of the command queue is too large will waste space, and too small will cause the span to be lost
         int maxQueueSize = SofaTracerConfiguration.getIntegerDefaultIfNull(
-            JaegerProperties.JAEGER_AGENT_MAX_QUEUE_SIZE_KEY, 10000);
+            JaegerProperties.JAEGER_MAX_QUEUE_SIZE_KEY, 10000);
         //Timeout for writing CloseCommand
         int closeEnqueueTimeout = SofaTracerConfiguration.getIntegerDefaultIfNull(
-            JaegerProperties.JAEGER_AGENT_CLOSE_ENQUEUE_TIMEOUT_MILLIS_KEY, 1000);
+            JaegerProperties.JAEGER_CLOSE_ENQUEUE_TIMEOUT_MILLIS_KEY, 1000);
         String serviceName = SofaTracerConfiguration
             .getProperty(JaegerProperties.JAEGER_SERVICE_NAME_KEY);
 
-        String collectorEnabledStr = SofaTracerConfiguration
-            .getProperty(JaegerProperties.JAEGER_COLLECTOR_IS_ENABLED_KEY);
-        String agentEnabledStr = SofaTracerConfiguration
-            .getProperty(JaegerProperties.JAEGER_AGENT_IS_ENABLED_KEY);
-
-        if (StringUtils.isNotBlank(collectorEnabledStr)
-            && "true".equalsIgnoreCase(collectorEnabledStr)) {
+        String enabledStr = SofaTracerConfiguration
+            .getProperty(JaegerProperties.JAEGER_IS_ENABLED_KEY);
+        String receiver = SofaTracerConfiguration
+            .getProperty(JaegerProperties.JAEGER_RECEIVER_KEY, "collector");
+        boolean enabled = false;
+        if (StringUtils.isNotBlank(enabledStr) && "true".equalsIgnoreCase(enabledStr)) {
+            enabled = true;
+        }
+        if (!enabled) {
+            return;
+        }
+        /**
+         * 接受端是collector
+         */
+        if ("collector".equals(receiver)) {
             String baseUrl = SofaTracerConfiguration.getProperty(
                 JaegerProperties.JAEGER_COLLECTOR_BASE_URL_KEY, "http://localhost:14268/");
             Integer maxPacketSize = SofaTracerConfiguration.getIntegerDefaultIfNull(
@@ -62,8 +70,10 @@ public class JaegerReportRegisterBean implements InitializingBean {
             spanReportListenerList.add(spanReportListener);
             SpanReportListenerHolder.addSpanReportListeners(spanReportListenerList);
         }
-
-        if (StringUtils.isNotBlank(agentEnabledStr) && "true".equalsIgnoreCase(agentEnabledStr)) {
+        /**
+         * 接受端是agent
+         */
+        if ("agent".equals(receiver)) {
             String host = SofaTracerConfiguration.getProperty(
                 JaegerProperties.JAEGER_AGENT_HOST_KEY, "127.0.0.1");
             int port = SofaTracerConfiguration.getIntegerDefaultIfNull(
