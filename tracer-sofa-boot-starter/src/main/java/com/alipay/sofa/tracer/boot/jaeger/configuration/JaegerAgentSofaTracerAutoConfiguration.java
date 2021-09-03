@@ -16,7 +16,7 @@
  */
 package com.alipay.sofa.tracer.boot.jaeger.configuration;
 
-import com.alipay.sofa.tracer.boot.jaeger.properties.JaegerAgentSofaTracerProperties;
+import com.alipay.sofa.tracer.boot.jaeger.properties.JaegerSofaTracerProperties;
 import com.alipay.sofa.tracer.plugins.jaeger.JaegerSofaTracerSpanRemoteReporter;
 import io.jaegertracing.internal.JaegerSpan;
 import io.jaegertracing.internal.JaegerSpanContext;
@@ -35,22 +35,24 @@ import org.springframework.context.annotation.Configuration;
  * report jaeger.thrift data to the jaeger agent
  */
 @Configuration
-@EnableConfigurationProperties(JaegerAgentSofaTracerProperties.class)
-@ConditionalOnProperty(value = "com.alipay.sofa.tracer.jaeger.agent.enabled", matchIfMissing = false)
+@EnableConfigurationProperties(JaegerSofaTracerProperties.class)
+@ConditionalOnProperty(value = "com.alipay.sofa.tracer.jaeger.agentEnabled", matchIfMissing = false)
 @ConditionalOnClass({ JaegerSpan.class, JaegerTracer.class, JaegerSpanContext.class })
 public class JaegerAgentSofaTracerAutoConfiguration {
     @Autowired
-    private JaegerAgentSofaTracerProperties jaegerAgentProperties;
+    private JaegerSofaTracerProperties jaegerProperties;
 
     @Value("${spring.application.name}")
-    private String                          serviceName;
+    private String                     serviceName;
 
     @Bean
     @ConditionalOnMissingBean
     public JaegerSofaTracerSpanRemoteReporter jaegerAgentSofaTracerSpanReporter()
                                                                                  throws TTransportException {
-        return new JaegerSofaTracerSpanRemoteReporter(jaegerAgentProperties.getHost(),
-            jaegerAgentProperties.getPort(), jaegerAgentProperties.getMaxPacketSize(), serviceName, jaegerAgentProperties.getFlushIntervalMill(), jaegerAgentProperties.getMaxQueueSize(), jaegerAgentProperties.getCloseEnqueueTimeoutMill());
+        return new JaegerSofaTracerSpanRemoteReporter(jaegerProperties.getAgentHost(),
+            jaegerProperties.getAgentPort(), jaegerProperties.getAgentMaxPacketSizeBytes(),
+            serviceName, jaegerProperties.getFlushIntervalMill(),
+            jaegerProperties.getMaxQueueSize(), jaegerProperties.getCloseEnqueueTimeoutMill());
     }
 
 }

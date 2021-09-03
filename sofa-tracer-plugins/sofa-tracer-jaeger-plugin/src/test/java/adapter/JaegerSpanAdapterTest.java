@@ -67,7 +67,7 @@ public class JaegerSpanAdapterTest {
     public void testConvertToJaegerSpan() throws TTransportException {
 
         JaegerSofaTracerSpanRemoteReporter remoteReporter = new JaegerSofaTracerSpanRemoteReporter(
-            "127.0.0.1", 6831, 65000, "testService");
+            "127.0.0.1", 6831, 65000, "testService", 1000, 10000, 1000);
         JaegerTracer jaegerTracer = remoteReporter.getJaegerTracer();
         JaegerSpan span = jaegerSpanAdapter.convertAndReport(sofaTracerSpan, jaegerTracer);
         Assert.assertTrue(span != null);

@@ -38,28 +38,31 @@ public class JaegerSofaTracerSpanRemoteReporter implements SpanReportListener, C
     private JaegerTracer      jaegerTracer;
 
     public JaegerSofaTracerSpanRemoteReporter(String host, int port, int maxPacketSize,
-                                              String serviceName, int flushInterval, int maxQueueSize, int closeEnqueueTimeout) throws TTransportException {
+                                              String serviceName, int flushInterval,
+                                              int maxQueueSize, int closeEnqueueTimeout)
+                                                                                        throws TTransportException {
         //use UdpSender to send to the jaeger Agent
         sender = new UdpSender(host, port, maxPacketSize);
         buildTracer(serviceName, flushInterval, maxQueueSize, closeEnqueueTimeout);
     }
 
     public JaegerSofaTracerSpanRemoteReporter(String baseUrl, int maxPacketSizeBytes,
-                                              String serviceName, int flushInterval, int maxQueueSize, int closeEnqueueTimeout) throws TTransportException {
+                                              String serviceName, int flushInterval,
+                                              int maxQueueSize, int closeEnqueueTimeout)
+                                                                                        throws TTransportException {
         String url = baseUrl + (baseUrl.endsWith("/") ? "" : "/") + "api/traces";
         //use Http sender to send to Jaeger collector directly
         sender = new HttpSender.Builder(url).withMaxPacketSize(maxPacketSizeBytes).build();
         buildTracer(serviceName, flushInterval, maxQueueSize, closeEnqueueTimeout);
     }
 
-
-    private void buildTracer(String serviceName, int flushInterval, int maxQueueSize, int closeEnqueueTimeout){
-        reporter = new RemoteReporter.Builder().withSender(sender)
-                .withFlushInterval(flushInterval).withMaxQueueSize(maxQueueSize)
-                .withCloseEnqueueTimeout(closeEnqueueTimeout).build();
+    private void buildTracer(String serviceName, int flushInterval, int maxQueueSize,
+                             int closeEnqueueTimeout) {
+        reporter = new RemoteReporter.Builder().withSender(sender).withFlushInterval(flushInterval)
+            .withMaxQueueSize(maxQueueSize).withCloseEnqueueTimeout(closeEnqueueTimeout).build();
 
         jaegerTracer = new JaegerTracer.Builder(serviceName).withReporter(reporter)
-                .withTraceId128Bit().withTag("ip", NetUtils.getLocalIpv4()).build();
+            .withTraceId128Bit().withTag("ip", NetUtils.getLocalIpv4()).build();
     }
 
     @Override
@@ -84,8 +87,5 @@ public class JaegerSofaTracerSpanRemoteReporter implements SpanReportListener, C
     public JaegerTracer getJaegerTracer() {
         return this.jaegerTracer;
     }
-
-
-
 
 }

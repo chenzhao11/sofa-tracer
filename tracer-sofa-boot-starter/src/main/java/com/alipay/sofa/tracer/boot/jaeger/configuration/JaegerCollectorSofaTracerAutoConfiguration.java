@@ -36,23 +36,27 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 
 /**
- * report Zipkin v2 JSON format span to the jaeger collector
+ * report jaeger.thrift to collector directly
  */
 
 @Configuration
 @EnableConfigurationProperties(JaegerSofaTracerProperties.class)
-@ConditionalOnProperty(value = "com.alipay.sofa.tracer.jaeger.enabled", matchIfMissing = false)
+@ConditionalOnProperty(value = "com.alipay.sofa.tracer.jaeger.collectorEnabled", matchIfMissing = false)
 @ConditionalOnClass({ JaegerSpan.class, JaegerTracer.class, JaegerSpanContext.class })
-public class JaegerSofaTracerAutoConfiguration {
+public class JaegerCollectorSofaTracerAutoConfiguration {
     @Autowired
     private JaegerSofaTracerProperties jaegerProperties;
 
     @Value("${spring.application.name}")
-    private String                          serviceName;
+    private String                     serviceName;
 
     @Bean
     @ConditionalOnMissingBean
-    public JaegerSofaTracerSpanRemoteReporter jaegerSofaTracerSpanRemoteReporter() throws TTransportException {
-        return new JaegerSofaTracerSpanRemoteReporter(jaegerProperties.getBaseUrl(), jaegerProperties.getmaxPacketSizeBytes(), serviceName, jaegerProperties.getFlushIntervalMill(), jaegerProperties.getMaxQueueSize(), jaegerProperties.getCloseEnqueueTimeoutMill());
+    public JaegerSofaTracerSpanRemoteReporter jaegerSofaTracerSpanRemoteReporter()
+                                                                                  throws TTransportException {
+        return new JaegerSofaTracerSpanRemoteReporter(jaegerProperties.getCollectorBaseUrl(),
+            jaegerProperties.getCollectorMaxPacketSizeBytes(), serviceName,
+            jaegerProperties.getFlushIntervalMill(), jaegerProperties.getMaxQueueSize(),
+            jaegerProperties.getCloseEnqueueTimeoutMill());
     }
 }
