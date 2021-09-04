@@ -64,10 +64,7 @@
             <artifactId>opentracing-util</artifactId>
             <version>0.33.0</version>
         </dependency>
-        <dependency>
-            <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-stdlib</artifactId>
-        </dependency>
+
         <!-- test dependency -->
         <dependency>
             <groupId>org.jmockit</groupId>

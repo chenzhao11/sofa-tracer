@@ -20,6 +20,7 @@ import com.alipay.common.tracer.core.context.span.SofaTracerSpanContext;
 import com.alipay.common.tracer.core.span.SofaTracerSpan;
 import com.alipay.common.tracer.core.span.SofaTracerSpanReferenceRelationship;
 import io.jaegertracing.internal.*;
+import io.opentracing.tag.Tags;
 import org.springframework.util.Assert;
 
 import java.util.ArrayList;
@@ -42,6 +43,13 @@ public class JaegerSpanAdapter {
 
         //construct tags in JaegerSpan
         Map<String, Object> tags = new LinkedHashMap<>();
+        //如果有error字段取出来变成error.message 并且吧error设置成true
+
+        if (sofaTracerSpan.getTagsWithStr().containsKey(Tags.ERROR.getKey())) {
+            tags.put("error.message", sofaTracerSpan.getTagsWithStr().get(Tags.ERROR.getKey()));
+            tags.put(Tags.ERROR.getKey(), true);
+            sofaTracerSpan.getTagsWithStr().remove(Tags.ERROR.getKey());
+        }
         tags.putAll(sofaTracerSpan.getTagsWithStr());
         tags.putAll(sofaTracerSpan.getTagsWithBool());
         tags.putAll(sofaTracerSpan.getTagsWithNumber());

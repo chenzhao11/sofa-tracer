@@ -47,8 +47,8 @@ public class JaegerReportRegisterBean implements InitializingBean {
 
         String enabledStr = SofaTracerConfiguration
             .getProperty(JaegerProperties.JAEGER_IS_ENABLED_KEY);
-        String receiver = SofaTracerConfiguration
-            .getProperty(JaegerProperties.JAEGER_RECEIVER_KEY, "collector");
+        String receiver = SofaTracerConfiguration.getProperty(JaegerProperties.JAEGER_RECEIVER_KEY,
+            "collector");
         boolean enabled = false;
         if (StringUtils.isNotBlank(enabledStr) && "true".equalsIgnoreCase(enabledStr)) {
             enabled = true;

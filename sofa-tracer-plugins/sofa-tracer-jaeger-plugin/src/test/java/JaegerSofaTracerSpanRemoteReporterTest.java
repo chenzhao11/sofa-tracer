@@ -67,13 +67,22 @@ public class JaegerSofaTracerSpanRemoteReporterTest {
     }
 
     @Test
-    public void testSpanReport() throws TTransportException {
+    public void testAgentSpanReport() throws TTransportException {
 
         JaegerSofaTracerSpanRemoteReporter remoteReporter = new JaegerSofaTracerSpanRemoteReporter(
             "127.0.0.1", 6831, 65000, "testService", 1000, 10000, 1000);
         JaegerTracer jaegerTracer = remoteReporter.getJaegerTracer();
         jaegerSpan = jaegerSpanAdapter.convertAndReport(sofaTracerSpan, jaegerTracer);
 
+    }
+
+    @Test
+    public void testCollectorSpanReport() throws TTransportException {
+
+        JaegerSofaTracerSpanRemoteReporter remoteReporter = new JaegerSofaTracerSpanRemoteReporter(
+            "http://localhost:14268/", 2 * 1024 * 1024, "testService", 1000, 10000, 1000);
+        JaegerTracer jaegerTracer = remoteReporter.getJaegerTracer();
+        jaegerSpan = jaegerSpanAdapter.convertAndReport(sofaTracerSpan, jaegerTracer);
     }
 
     @Test
