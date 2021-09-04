@@ -16,6 +16,8 @@
  */
 package com.alipay.sofa.tracer.plugins.skywalking.reporter;
 
+import com.alibaba.fastjson.JSON;
+import com.alipay.common.tracer.core.appender.self.SelfLog;
 import com.alipay.sofa.tracer.plugins.skywalking.sender.SkywalkingRestTemplateSender;
 import com.alipay.sofa.tracer.plugins.skywalking.model.Segment;
 
@@ -30,6 +32,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -38,8 +41,9 @@ public class AsyncReporter implements Closeable {
     static final Logger          logger             = Logger.getLogger(AsyncReporter.class
                                                         .getName());
     final AtomicBoolean          closed             = new AtomicBoolean(false);
-    final ReentrantLock          lock               = new ReentrantLock(false);
-    final Segment[]              segments;
+    final ReentrantLock lock      = new ReentrantLock(false);
+    final Condition     available = lock.newCondition();
+    final Segment[]     segments;
     final int                    maxSize;
     SkywalkingRestTemplateSender sender;
     //记录缓存中当前有多少个segment
@@ -57,6 +61,12 @@ public class AsyncReporter implements Closeable {
     // 在关闭reporter线程的时候应该先等数据上报完成
     final CountDownLatch         close              = new CountDownLatch(1);
 
+    // 是sender的最大值zipkin中是默认值2M
+    int messageMaxBytes = 2 * 1024 * 1024;
+    // 默认是1秒
+    long messageTimeoutNanos = TimeUnit.SECONDS.toNanos(1);
+    long closeTimeoutNanos = TimeUnit.SECONDS.toNanos(1);
+
     /**
      *
      * 创建reporter的同时创建一个定时任务
@@ -69,64 +79,28 @@ public class AsyncReporter implements Closeable {
         this.segments = new Segment[maxBufferSize];
         this.sender = sender;
         this.lastLogTime = System.currentTimeMillis();
-        //需要创建一个定时任务不断从上面队列中取出数据上传
-        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-        scheduler.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
-                boolean isClosed = closed.get();
-                List<Segment> segmentList = getAllSegments();
-
+        final Message message = new Message(messageMaxBytes, messageTimeoutNanos);
+        final Thread flushThread = new Thread("AsyncReporter{" + sender + "}") {
+            @Override public void run() {
                 try {
-                    //检查reporter是否关闭如果关闭就停止定时任务
-                    if (isClosed) {
-                        scheduler.shutdown();
+                    while (!closed.get()) {
+                        //没有结束不断的刷新
+                        flush(message);
                     }
-                    //使用sender发送组装好的segment数据
-                    if (segmentList.isEmpty()) {
-                        return;
-                    }
-
-                    //不用根据返回的情况看是否成功？
-                    System.out.println("reporter中进入sender：");
-                    // if fail,  add metric
-                    if (!sender.post(segmentList)) {
-                        //need to lock?
-                        segmentDroppedNum += segmentList.size();
-                    }
-                    ;
-                    System.out.println("reporter发送成功！");
-                    segmentUplinkedNum += segmentList.size();
-                } catch (Exception e) {
-                    logger.log(Level.WARNING, "Unexpected exception during sending segments", e);
-                    // 发送失败需要添加segmentDroppedNum
-                    segmentDroppedNum += segmentList.size();
+                } catch (RuntimeException | Error e) {
+                    SelfLog.error("Unexpected error flushing spans" , e);
                 } finally {
-                    //每30S记录一次日志
-                    if (System.currentTimeMillis() - lastLogTime > 30000) {
-                        if (segmentUplinkedNum > 0) {
-                            logger.log(Level.INFO, String.format(
-                                "%d trace segments have been sent to collector.",
-                                segmentUplinkedNum));
-                            segmentUplinkedNum = 0;
-                        }
-                        if (segmentDroppedNum > 0) {
-                            logger.log(Level.INFO, String.format(
-                                "%d trace segments have been abandoned", segmentDroppedNum));
-                            segmentDroppedNum = 0;
-                        }
+
+                    if (count > 0) {
+                        segmentDroppedNum += count;
+                        SelfLog.error("Dropped " + segmentDroppedNum + " spans due to AsyncReporter.close()");
                     }
-                    //关闭线程池后不再接受新的任务，上面的任务执行结束后就不会有
-                    if (isClosed) {
-                        //统计丢失信息，countdown
-                        logger.log(Level.INFO, String.format(
-                            "%d trace segments have been abandoned", segmentDroppedNum + clear()));
-                        close.countDown();
-                    }
+                    close.countDown();
                 }
             }
-        }, 0,//根据配置文件配置这个间隔时间
-            flushInterval, TimeUnit.MILLISECONDS);
+        };
+        flushThread.setDaemon(true);
+        flushThread.start();
     }
 
     public void report(Segment segment) {
@@ -136,6 +110,23 @@ public class AsyncReporter implements Closeable {
         if (closed.get() || !addSegment(segment)) {
             segmentDroppedNum++;
         }
+    }
+
+    /**
+     * flush 创建的线程不断的调用如果达到时间显示或者是容量限制就发送数据
+     */
+
+    public void flush(Message message){
+        // 如果已经结束了抛出异常
+        if (closed.get()) throw new IllegalStateException("closed");
+        // 把数据加入到message队列中
+        drainTo(message, message.remainingNanos());
+        // 判断是不是可以发送message中的数据了
+        // loop around if we are running, and the bundle isn't full
+        // if we are closed, try to send what's pending
+        if (!message.isReady() && !closed.get()) return;
+        // 发送message中的数据
+        //发送结束重置message
     }
 
     /**
@@ -153,6 +144,8 @@ public class AsyncReporter implements Closeable {
             if (writePos == maxSize)
                 writePos = 0;
             count++;
+            // 加入成功，通知等待的
+            available.signal(); // alert any drainers
             return true;
         } finally {
             lock.unlock();
@@ -214,4 +207,58 @@ public class AsyncReporter implements Closeable {
             Thread.currentThread().interrupt();
         }
     }
+
+    /**
+     *  Blocks for up to nanosTimeout for spans to appear. Then, consume as many as possible.
+     *  把当前queue中的数据加入到message中
+     * @param message
+     * @param nanosTimeout message中的remainingNanos
+     * @return
+     */
+    int drainTo(Message message, long nanosTimeout) {
+        try {
+            // This may be called by multiple threads. If one is holding a lock, another is waiting. We
+            // use lockInterruptibly to ensure the one waiting can be interrupted.
+            lock.lockInterruptibly();
+            try {
+                long nanosLeft = nanosTimeout;
+                while (count == 0) {
+                    if (nanosLeft <= 0) return 0;
+                    nanosLeft = available.awaitNanos(nanosLeft);
+                }
+                return doDrain(message);
+            } finally {
+                lock.unlock();
+            }
+        } catch (InterruptedException e) {
+            return 0;
+        }
+    }
+
+    int doDrain(Message message) {
+        int drainedCount = 0;
+        int drainedSizeInBytes = 0;
+        // 尽可能读segment到message中除非时间和容量限制
+        while (drainedCount < count) {
+            Segment next = segments[readPos];
+            // 这里在lock中编码，性能不好还是要再封装一个buffer
+            int nextSizeInBytes = JSON.toJSONString(next).length();
+
+            if (next == null) break;
+            if (message.offer(next, nextSizeInBytes)) {
+                drainedCount++;
+                drainedSizeInBytes += nextSizeInBytes;
+
+                segments[readPos] = null;
+                if (++readPos == segments.length) readPos = 0; // circle back to the front of the array
+            } else {
+                break;
+            }
+        }
+        count -= drainedCount;
+        return drainedCount;
+    }
+}
+
+
 }
