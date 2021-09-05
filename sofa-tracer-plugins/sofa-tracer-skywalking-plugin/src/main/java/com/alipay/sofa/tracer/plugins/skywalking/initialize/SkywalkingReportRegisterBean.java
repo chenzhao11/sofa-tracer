@@ -48,12 +48,8 @@ public class SkywalkingReportRegisterBean implements InitializingBean {
             SkywalkingProperties.SKYWALKING_BASE_URL_KEY, "http://localhost:12800");
         int maxBufferSize = Integer.valueOf(SofaTracerConfiguration.getProperty(
             SkywalkingProperties.SKYWALKING_MAX_BUFFER_SIZE_KEY, "10000"));
-        //设置默认的上传间隔，时间单位是mm
-        int flushIntervalMill = Integer.valueOf(SofaTracerConfiguration.getProperty(
-            SkywalkingProperties.SKYWALKING_FLUSH_INTERVAL_MILL_KEY, "200"));
 
-        SpanReportListener spanReportListener = new SkywalkingSpanRemoteReporter(baseUrl,
-            maxBufferSize, flushIntervalMill);
+        SpanReportListener spanReportListener = new SkywalkingSpanRemoteReporter(baseUrl, maxBufferSize);
         List<SpanReportListener> spanReportListenerList = new ArrayList<SpanReportListener>();
         spanReportListenerList.add(spanReportListener);
         SpanReportListenerHolder.addSpanReportListeners(spanReportListenerList);

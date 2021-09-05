@@ -16,6 +16,7 @@
  */
 package com.alipay.sofa.tracer.plugins.skywalking;
 
+import com.alibaba.fastjson.JSON;
 import com.alipay.common.tracer.core.listener.SpanReportListener;
 import com.alipay.common.tracer.core.span.SofaTracerSpan;
 import com.alipay.sofa.tracer.plugins.skywalking.adapter.SkywalkingSegmentAdapter;
@@ -34,10 +35,10 @@ public class SkywalkingSpanRemoteReporter implements SpanReportListener, Closeab
     private SkywalkingRestTemplateSender sender;
     private SkywalkingSegmentAdapter     adapter;
 
-    public SkywalkingSpanRemoteReporter(String baseUrl, int maxBufferSize, int flushInterval) {
+    public SkywalkingSpanRemoteReporter(String baseUrl, int maxBufferSize) {
         adapter = new SkywalkingSegmentAdapter();
         sender = new SkywalkingRestTemplateSender(new RestTemplate(), baseUrl);
-        reporter = new AsyncReporter(maxBufferSize, sender, flushInterval);
+        reporter = new AsyncReporter(maxBufferSize, sender);
     }
 
     @Override
@@ -46,7 +47,8 @@ public class SkywalkingSpanRemoteReporter implements SpanReportListener, Closeab
             return;
         }
         Segment segment = adapter.convertToSkywalkingSegment(sofaTracerSpan);
-        reporter.report(segment);
+        int segmentSize = JSON.toJSONString(segment).length();
+        reporter.report(segment, segmentSize);
     }
 
     @Override

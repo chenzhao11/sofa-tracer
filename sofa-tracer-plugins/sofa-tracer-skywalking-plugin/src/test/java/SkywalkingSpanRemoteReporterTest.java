@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import com.alibaba.fastjson.JSON;
 import com.alipay.common.tracer.core.SofaTracer;
 import com.alipay.common.tracer.core.constants.ComponentNameConstants;
 import com.alipay.common.tracer.core.span.CommonSpanTags;
@@ -39,7 +40,7 @@ public class SkywalkingSpanRemoteReporterTest {
 
     @Before
     public void init() throws InterruptedException {
-        reporter = new SkywalkingSpanRemoteReporter("http://127.0.0.1:12800", 10000, 100);
+        reporter = new SkywalkingSpanRemoteReporter("http://127.0.0.1:12800", 10000);
 
         sofaTracer = new SofaTracer.Builder(tracerType).withTag("tracer", "SofaTraceZipkinTest")
             .build();
@@ -63,4 +64,5 @@ public class SkywalkingSpanRemoteReporterTest {
     public void testOnSpanReport() {
         reporter.onSpanReport(sofaTracerSpan);
     }
+
 }

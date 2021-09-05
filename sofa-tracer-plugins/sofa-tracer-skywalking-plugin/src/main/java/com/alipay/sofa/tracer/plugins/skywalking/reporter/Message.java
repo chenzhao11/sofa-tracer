@@ -16,6 +16,8 @@ public class Message {
     int messageSizeInBytes;
     // 超过这个时间就会发送message中数据，是当前系统的时间加上超时时间
     long deadlineNanoTime;
+    // 当前message中有多少个segment
+    int count = 0;
 
 
     public Message(int maxBytes, Long timeoutNanos){
@@ -43,6 +45,7 @@ public class Message {
 
         addSegmentToMessage(next);
         messageSizeInBytes = x;
+        count++;
         // 刚好填满
         if (includingNextVsMaxBytes == 0) full = true;
         return true;
@@ -63,6 +66,7 @@ public class Message {
         //清空过后会重新计算
         deadlineNanoTime = 0;
         full = false;
+        count = 0;
         message.clear();
     }
 
@@ -101,6 +105,10 @@ public class Message {
      */
     boolean isReady() {
         return full || remainingNanos() <= 0;
+    }
+
+    int getCount(){
+        return this.count;
     }
 
 }
