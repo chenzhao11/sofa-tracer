@@ -16,6 +16,7 @@
  */
 package com.alipay.sofa.tracer.plugins.skywalking.model;
 
+import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -24,6 +25,10 @@ import java.util.List;
 
 @Getter
 @Setter
+/**
+ * so the detail of span :
+ * https://github.com/apache/skywalking-data-collect-protocol/blob/e626ee04850703c220f64b642d2893fa65572943/language-agent/Tracing.proto
+ */
 public class Span {
     private int                      spanId;
     private int                      parentSpanId;
@@ -31,13 +36,12 @@ public class Span {
     private Long                     endTime;
     private List<SegmentReference>   refs = new LinkedList<>();
     private String                   operationName;
-    //peer在exit span中使用对构建拓扑图有至关重要的作用
     private String                   peer;
-    //如果引入的SW依赖包中东西很少可以考虑直接把文件拷贝过来
     private SpanType                 spanType;
     // Span layer represent the component tech stack, related to the network tech.
     private SpanLayer                spanLayer;
     private int                      componentId;
+    @JSONField(name = "isError")
     private boolean                  isError;
     private List<KeyStringValuePair> tags = new LinkedList<>();
     private List<Log>                logs = new LinkedList<>();
@@ -51,7 +55,6 @@ public class Span {
         tags.add(new KeyStringValuePair(key, value));
     }
 
-    //需要把lombok自动生成的set函数取消掉
     public void addLog(Log log) {
         logs.add(log);
     }

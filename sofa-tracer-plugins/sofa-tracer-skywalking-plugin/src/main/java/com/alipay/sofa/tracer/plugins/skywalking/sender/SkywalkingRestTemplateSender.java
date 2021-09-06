@@ -17,14 +17,12 @@
 package com.alipay.sofa.tracer.plugins.skywalking.sender;
 
 import com.alibaba.fastjson.JSON;
-import com.alipay.sofa.tracer.plugins.skywalking.reporter.AsyncReporter;
 import com.alipay.sofa.tracer.plugins.skywalking.model.Segment;
 import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
 import java.util.List;
-import java.util.logging.Logger;
 
 public class SkywalkingRestTemplateSender {
     private RestTemplate restTemplate;
@@ -35,58 +33,13 @@ public class SkywalkingRestTemplateSender {
         this.url = baseUrl + (baseUrl.endsWith("/") ? "" : "/") + "v3/segments";
     }
 
-    //    public void post(SegmentObject segmentObject) {
-    //        HttpHeaders httpHeaders = new HttpHeaders();
-    //        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-    //        String json = SegmentObject2JSON.toJSONString(segmentObject);
-    //
-    //        RequestEntity<String> requestEntity = new RequestEntity<String>(json, httpHeaders,
-    //            HttpMethod.POST, URI.create(this.url));
-    //        this.restTemplate.exchange(requestEntity, String.class);
-    //    }
-
-    //为了测试方便加上的
-    public void post(String json) {
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-        RequestEntity<String> requestEntity = new RequestEntity<String>(json, httpHeaders,
-            HttpMethod.POST, URI.create(this.url));
-        this.restTemplate.exchange(requestEntity, String.class);
-    }
-
-    //测试自定义的POJO
     public boolean post(List<Segment> segments) {
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-
-        String json = JSON.toJSONString(segments);
-        System.out.println("需要发送的segment是" + json);
-
-        RequestEntity<String> requestEntity = new RequestEntity<String>(json, httpHeaders,
-            HttpMethod.POST, URI.create(this.url));
-        //发送请求出错也不用处理？
-
-        Logger logger = Logger.getLogger(AsyncReporter.class.getName());
-        logger.warning("开始发送信息");
-        ResponseEntity<String> response = this.restTemplate.exchange(requestEntity, String.class);
-        if (response.getStatusCode() != HttpStatus.OK) {
-            return false;
-        }
-
-        logger.warning(response.toString());
-        logger.warning(response.getStatusCodeValue() + "");
-        return true;
-
-    }
-
-    //测试自定义的POJO
-    public void post(Segment segments) {
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
         String json = JSON.toJSONString(segments);
         RequestEntity<String> requestEntity = new RequestEntity<String>(json, httpHeaders,
             HttpMethod.POST, URI.create(this.url));
-        //发送请求出错也不用处理？
-        this.restTemplate.exchange(requestEntity, String.class);
+        ResponseEntity response = this.restTemplate.exchange(requestEntity, String.class);
+        return response.getStatusCode().is2xxSuccessful();
     }
 }

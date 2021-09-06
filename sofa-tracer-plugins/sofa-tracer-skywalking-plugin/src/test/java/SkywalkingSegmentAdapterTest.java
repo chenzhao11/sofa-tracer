@@ -14,8 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package adapter;
-
 import com.alibaba.fastjson.JSON;
 import com.alipay.common.tracer.core.SofaTracer;
 import com.alipay.common.tracer.core.constants.ComponentNameConstants;
@@ -25,6 +23,9 @@ import com.alipay.common.tracer.core.span.SofaTracerSpan;
 import com.alipay.sofa.tracer.plugins.skywalking.adapter.SkywalkingSegmentAdapter;
 import com.alipay.sofa.tracer.plugins.skywalking.model.Segment;
 
+import com.alipay.sofa.tracer.plugins.skywalking.model.Span;
+import com.alipay.sofa.tracer.plugins.skywalking.model.SpanLayer;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -47,7 +48,7 @@ public class SkywalkingSegmentAdapterTest {
         sofaTracerSpan = (SofaTracerSpan) this.sofaTracer.buildSpan("SofaTracerSpanTest").start();
         sofaTracerSpan.setTag("tagsStrkey", "tagsStrVal");
         sofaTracerSpan.setTag("tagsBooleankey", true);
-        sofaTracerSpan.setTag("tagsBooleankey", 2018);
+        sofaTracerSpan.setTag("tagsNumkey", 2018);
         sofaTracerSpan.setBaggageItem("baggageKey", "baggageVal");
         sofaTracerSpan.setTag(CommonSpanTags.LOCAL_APP, "SofaTracerSpanTest");
         Map<String, String> logMap = new HashMap<String, String>();
@@ -62,6 +63,15 @@ public class SkywalkingSegmentAdapterTest {
     @Test
     public void testConvertToSegment() {
         Segment segment = adapter.convertToSkywalkingSegment(sofaTracerSpan);
-        System.out.println(JSON.toJSONString(segment));
+        Assert.assertTrue(segment != null);
+        Span span = segment.getSpans().get(0);
+        Assert.assertTrue(span.getOperationName().equalsIgnoreCase(
+            sofaTracerSpan.getOperationName()));
+        Assert.assertTrue(span.getTags().size() == 4);
+        Assert.assertTrue(segment.getTraceId().contains(
+            sofaTracerSpan.getSofaTracerSpanContext().getTraceId()));
+        Assert.assertTrue(span.getLogs().size() == 1);
+        Assert.assertTrue(span.getSpanLayer().equals(SpanLayer.Database));
+        Assert.assertTrue(span.getComponentId() == 0);
     }
 }

@@ -16,10 +16,18 @@
  */
 package com.alipay.sofa.tracer.plugins.jaeger.adapter;
 
+import com.alipay.common.tracer.core.constants.SofaTracerConstant;
 import com.alipay.common.tracer.core.context.span.SofaTracerSpanContext;
+import com.alipay.common.tracer.core.span.CommonSpanTags;
+import com.alipay.common.tracer.core.span.LogData;
 import com.alipay.common.tracer.core.span.SofaTracerSpan;
 import com.alipay.common.tracer.core.span.SofaTracerSpanReferenceRelationship;
-import io.jaegertracing.internal.*;
+import com.alipay.common.tracer.core.utils.StringUtils;
+import io.jaegertracing.internal.JaegerSpan;
+import io.jaegertracing.internal.JaegerTracer;
+import io.jaegertracing.internal.JaegerSpanContext;
+import io.jaegertracing.internal.Reference;
+import io.jaegertracing.internal.JaegerObjectFactory;
 import io.opentracing.tag.Tags;
 import org.springframework.util.Assert;
 
@@ -43,14 +51,16 @@ public class JaegerSpanAdapter {
 
         //construct tags in JaegerSpan
         Map<String, Object> tags = new LinkedHashMap<>();
-        //如果有error字段取出来变成error.message 并且吧error设置成true
-
-        if (sofaTracerSpan.getTagsWithStr().containsKey(Tags.ERROR.getKey())) {
-            tags.put("error.message", sofaTracerSpan.getTagsWithStr().get(Tags.ERROR.getKey()));
-            tags.put(Tags.ERROR.getKey(), true);
-            sofaTracerSpan.getTagsWithStr().remove(Tags.ERROR.getKey());
+        Map<String, String> strTags = sofaTracerSpan.getTagsWithStr();
+        //in sofaTracer error contains the error message while in jaeger error represents whether it's error
+        if (strTags.containsKey(Tags.ERROR.getKey())) {
+            strTags.put("error.message", strTags.get(Tags.ERROR.getKey()));
         }
-        tags.putAll(sofaTracerSpan.getTagsWithStr());
+        String resultCode = strTags.get(CommonSpanTags.RESULT_CODE);
+        if (StringUtils.isNotBlank(resultCode) && !isWebHttpClientSuccess(resultCode)) {
+            sofaTracerSpan.getTagsWithBool().put(Tags.ERROR.getKey(), true);
+        }
+        tags.putAll(strTags);
         tags.putAll(sofaTracerSpan.getTagsWithBool());
         tags.putAll(sofaTracerSpan.getTagsWithNumber());
 
@@ -82,11 +92,8 @@ public class JaegerSpanAdapter {
      * @return JaegerSpanContext
      */
     private JaegerSpanContext getJaegerSpanContext(SofaTracerSpanContext sofaTracerSpanContext) {
-
-        String sofaTraceId = sofaTracerSpanContext.getTraceId();
         //when length is less than 32 add 0 to the font
-        sofaTraceId = "00000000000000000000000000000000".substring(sofaTraceId.length())
-                      + sofaTraceId;
+        String sofaTraceId = padLeft(sofaTracerSpanContext.getTraceId(), 32);
         long traceIdHigh = hexToLong(sofaTraceId.substring(0, 16));
         long traceIdLow = hexToLong(sofaTraceId.substring(16));
 
@@ -119,9 +126,9 @@ public class JaegerSpanAdapter {
      * convert logdata
      */
     private JaegerSpan setLogData(SofaTracerSpan span, JaegerSpan jaegerSpan) {
-        List<com.alipay.common.tracer.core.span.LogData> sofaLogDatas = span.getLogs();
+        List<LogData> sofaLogDatas = span.getLogs();
 
-        for (com.alipay.common.tracer.core.span.LogData sofalogData : sofaLogDatas) {
+        for (LogData sofalogData : sofaLogDatas) {
             jaegerSpan.log(sofalogData.getTime() * 1000, sofalogData.getFields());
         }
         return jaegerSpan;
@@ -177,6 +184,27 @@ public class JaegerSpanAdapter {
             hash *= 0x100000001b3L;
         }
         return hash;
+    }
+
+    private boolean isHttpOrMvcSuccess(String resultCode) {
+        return resultCode.charAt(0) == '1' || resultCode.charAt(0) == '2'
+               || "302".equals(resultCode.trim()) || ("301".equals(resultCode.trim()));
+    }
+
+    private boolean isWebHttpClientSuccess(String resultCode) {
+        return StringUtils.isNotBlank(resultCode)
+               && (isHttpOrMvcSuccess(resultCode) || SofaTracerConstant.RESULT_CODE_SUCCESS
+                   .equals(resultCode));
+    }
+
+    private String padLeft(String id, int desiredLength) {
+        StringBuilder builder = new StringBuilder(desiredLength);
+        int offset = desiredLength - id.length();
+
+        for (int i = 0; i < offset; i++)
+            builder.append('0');
+        builder.append(id);
+        return builder.toString();
     }
 
 }

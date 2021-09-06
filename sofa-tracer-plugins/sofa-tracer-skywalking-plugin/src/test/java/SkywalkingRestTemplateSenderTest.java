@@ -20,49 +20,44 @@ import com.alipay.common.tracer.core.span.CommonSpanTags;
 import com.alipay.common.tracer.core.span.LogData;
 import com.alipay.common.tracer.core.span.SofaTracerSpan;
 import com.alipay.sofa.tracer.plugins.skywalking.SkywalkingSpanRemoteReporter;
-
+import com.alipay.sofa.tracer.plugins.skywalking.adapter.SkywalkingSegmentAdapter;
+import com.alipay.sofa.tracer.plugins.skywalking.model.Segment;
+import com.alipay.sofa.tracer.plugins.skywalking.sender.SkywalkingRestTemplateSender;
 import io.opentracing.tag.Tags;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-public class SkywalkingSpanRemoteReporterTest {
-    private SkywalkingSpanRemoteReporter reporter;
-
+public class SkywalkingRestTemplateSenderTest {
     private final String                 tracerType = ComponentNameConstants.REDIS;
-
+    private SkywalkingSegmentAdapter     adapter    = new SkywalkingSegmentAdapter();
     private SofaTracer                   sofaTracer;
-
-    private SofaTracerSpan               sofaTracerSpan;
+    private SkywalkingRestTemplateSender sender;
+    SofaTracerSpan                       sofaTracerSpan;
 
     @Before
     public void init() throws InterruptedException {
-        reporter = new SkywalkingSpanRemoteReporter("http://127.0.0.1:12800", 10000);
-
+        sender = new SkywalkingRestTemplateSender(new RestTemplate(), "http://127.0.0.1:12800");
         sofaTracer = new SofaTracer.Builder(tracerType).withTag("tracer", "SofaTraceZipkinTest")
             .build();
         sofaTracerSpan = (SofaTracerSpan) this.sofaTracer.buildSpan("http//asynictest.com").start();
         sofaTracerSpan.setTag("tagsStrkey", "tagsStrVal");
-        sofaTracerSpan.setTag("tagsBooleankey", true);
-        sofaTracerSpan.setTag("tagsBooleankey", 2018);
-        sofaTracerSpan.setTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER);
-        sofaTracerSpan.setBaggageItem("baggageKey", "baggageVal");
-        sofaTracerSpan.setTag(CommonSpanTags.LOCAL_APP, "TESTABC");
-        Map<String, String> logMap = new HashMap<String, String>();
-        logMap.put("logKey", "logVal");
-        LogData logData = new LogData(System.currentTimeMillis(), logMap);
-        sofaTracerSpan.log(logData);
         // mock process
         Thread.sleep(30);
         sofaTracerSpan.setEndTime(System.currentTimeMillis());
     }
 
     @Test
-    public void testOnSpanReport() {
-        reporter.onSpanReport(sofaTracerSpan);
+    public void testPost() {
+        ArrayList<Segment> segments = new ArrayList<>();
+        Segment segment = adapter.convertToSkywalkingSegment(sofaTracerSpan);
+        segments.add(segment);
+        Assert.assertTrue(sender.post(segments));
     }
-
 }

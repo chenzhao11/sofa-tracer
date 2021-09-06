@@ -56,9 +56,7 @@ public class JaegerReportRegisterBean implements InitializingBean {
         if (!enabled) {
             return;
         }
-        /**
-         * 接受端是collector
-         */
+        // receiver is collector
         if ("collector".equals(receiver)) {
             String baseUrl = SofaTracerConfiguration.getProperty(
                 JaegerProperties.JAEGER_COLLECTOR_BASE_URL_KEY, "http://localhost:14268/");
@@ -70,9 +68,7 @@ public class JaegerReportRegisterBean implements InitializingBean {
             spanReportListenerList.add(spanReportListener);
             SpanReportListenerHolder.addSpanReportListeners(spanReportListenerList);
         }
-        /**
-         * 接受端是agent
-         */
+        // receiver is agent
         if ("agent".equals(receiver)) {
             String host = SofaTracerConfiguration.getProperty(
                 JaegerProperties.JAEGER_AGENT_HOST_KEY, "127.0.0.1");

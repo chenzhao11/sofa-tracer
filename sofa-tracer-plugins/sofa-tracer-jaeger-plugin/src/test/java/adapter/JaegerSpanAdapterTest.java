@@ -73,6 +73,7 @@ public class JaegerSpanAdapterTest {
         Assert.assertTrue(span != null);
         Assert.assertTrue(span.getOperationName().equalsIgnoreCase(
             sofaTracerSpan.getOperationName()));
+        System.out.println(span.getTags().size());
         Assert.assertTrue(span.getTags().size() == 4);
 
     }

@@ -28,7 +28,7 @@ public class JaegerSofaTracerProperties {
 
     private boolean   enabled                 = false;
     /**
-     * 接受的是agent还是collector
+     * receiver of span, it can be collector or agent
      */
     private String    receiver                = "collector";
 

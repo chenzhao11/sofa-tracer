@@ -21,8 +21,15 @@ import com.alipay.common.tracer.core.constants.SofaTracerConstant;
 import com.alipay.common.tracer.core.span.CommonSpanTags;
 import com.alipay.common.tracer.core.span.LogData;
 import com.alipay.common.tracer.core.span.SofaTracerSpan;
+import com.alipay.common.tracer.core.utils.NetUtils;
 import com.alipay.common.tracer.core.utils.StringUtils;
-import com.alipay.sofa.tracer.plugins.skywalking.model.*;
+import com.alipay.sofa.tracer.plugins.skywalking.model.Segment;
+import com.alipay.sofa.tracer.plugins.skywalking.model.Span;
+import com.alipay.sofa.tracer.plugins.skywalking.model.SpanType;
+import com.alipay.sofa.tracer.plugins.skywalking.model.SpanLayer;
+import com.alipay.sofa.tracer.plugins.skywalking.model.SegmentReference;
+import com.alipay.sofa.tracer.plugins.skywalking.model.Log;
+import com.alipay.sofa.tracer.plugins.skywalking.model.RefType;
 import com.alipay.sofa.tracer.plugins.skywalking.utils.ComponentName2ComponentId;
 import com.alipay.sofa.tracer.plugins.skywalking.utils.ComponentName2SpanLayer;
 
@@ -88,7 +95,8 @@ public class SkywalkingSegmentAdapter {
 
         //map tracerType in sofaTracer to ComponentId in skyWalking
         span.setComponentId(getComponentId(sofaTracerSpan));
-        span.setError(isError(sofaTracerSpan));
+        span.setError(!isWebHttpClientSuccess(sofaTracerSpan.getTagsWithStr().get(
+            CommonSpanTags.RESULT_CODE)));
         span.setSkipAnalysis(true);
         span = convertSpanTags(sofaTracerSpan, span);
         convertSpanLogs(sofaTracerSpan, span);
@@ -96,20 +104,18 @@ public class SkywalkingSegmentAdapter {
         if (!StringUtils.isBlank(sofaTracerSpan.getSofaTracerSpanContext().getParentId())) {
             span = addSegmentReference(sofaTracerSpan, span);
         }
-
-        String remoteHost = sofaTracerSpan.getTagsWithStr().get("remote.host");
-        String remotePort = sofaTracerSpan.getTagsWithStr().get("remote.port");
+        // Dubbo
+        String remoteHost = sofaTracerSpan.getTagsWithStr().get(CommonSpanTags.REMOTE_HOST);
+        String remotePort = sofaTracerSpan.getTagsWithStr().get(CommonSpanTags.REMOTE_PORT);
+        // sofaRpc
         String remoteIp = sofaTracerSpan.getTagsWithStr().get("remote.ip");
 
-        // exit和entry都需要设置？不然拓扑图会多出一个节点？
-        if (sofaTracerSpan.isClient() && remoteHost != null && remotePort != null) {
+        if (remoteHost != null && remotePort != null) {
             span.setPeer(remoteHost + ":" + remotePort);
         }
-        if (sofaTracerSpan.isServer() && remoteHost != null && remotePort != null) {
-            span.setPeer(remoteHost + ":" + remotePort);
-        }
-        // if the span is formed by sofaRPC
-        if (sofaTracerSpan.getSofaTracer().getTracerType().equals("RPC_TRACER") && remoteIp != null) {
+        // if the span is formed by sofaRPC, we can only get  ip of the server  to generate networkAddressUsedAtPeer
+        if (sofaTracerSpan.getSofaTracer().getTracerType().equals(ComponentNameConstants.SOFA_RPC)
+            && remoteIp != null) {
             span.setPeer(remoteIp.split(":")[0]);
         }
         return span;
@@ -125,48 +131,42 @@ public class SkywalkingSegmentAdapter {
     }
 
     /**
-     * 构造ServiceInstanceName,可以考虑不传入sofaTracerSpan提高一点效率
+     * ServiceInstanceName
+     * @param sofaTracerSpan
+     * @return instanceName
      */
     private String constructServiceInstanceName(SofaTracerSpan sofaTracerSpan) {
-        //目前只是通过机器的ip来构建实例，还可以有哪些其他的方式？？
         InetAddress localIpAddress = NetUtils.getLocalAddress();
         return constructServiceName(sofaTracerSpan) + "@" + localIpAddress.getHostAddress();
     }
 
     /**
-     * 获取parentSegmentId
+     * get  parentSegmentId
+     * @param sofaTracerSpan
+     * @return parentSegmentId
      */
     private String getParentSegmentId(SofaTracerSpan sofaTracerSpan) {
-        //长度应该限制一下？但是长度限制的话可能有的segmentId一样会覆盖
-        //自己是serverspan父span只能是client ，自己是client父只能server(X)
-        //在sofaRPC中也有可能是 server->server
-        // if the span is the server span of RPC, then it's parentSegmentId is traceId + spanId +client
+        String traceId = sofaTracerSpan.getSofaTracerSpanContext().getTraceId();
+        //in sofaRPC and Dubbo  server->server is possible
+        // if the span is the server span of RPC, then it's parentSegmentId is traceId + FNV64HashCode(spanId) + SofaTracerConstant.CLIENT
         if (sofaTracerSpan.isServer()
             && ComponentName2SpanLayer.map.get(sofaTracerSpan.getSofaTracer().getTracerType())
                 .equals(SpanLayer.RPCFramework)) {
-            return sofaTracerSpan.getSofaTracerSpanContext().getTraceId()
-                   + FNV64HashCode(sofaTracerSpan.getSofaTracerSpanContext().getSpanId())
+            // server and client span share the same traceId and spanId
+            return traceId + FNV64HashCode(sofaTracerSpan.getSofaTracerSpanContext().getSpanId())
                    + SofaTracerConstant.CLIENT;
         }
-        String prefix = sofaTracerSpan.getSofaTracerSpanContext().getTraceId()
-                        + FNV64HashCode(sofaTracerSpan.getSofaTracerSpanContext().getParentId());
-        return prefix
+        return traceId
+               + FNV64HashCode(sofaTracerSpan.getSofaTracerSpanContext().getParentId())
                + (sofaTracerSpan.isServer() ? SofaTracerConstant.CLIENT : SofaTracerConstant.SERVER);
 
     }
 
     /**
-     *获取ParentEndpoint，因为可能为空指针所以需要单独拎出来处理
-     */
-    private String getParentEndpoint(SofaTracerSpan sofaTracerSpan) {
-        if (sofaTracerSpan.getParentSofaTracerSpan() != null) {
-            return sofaTracerSpan.getParentSofaTracerSpan().getOperationName();
-        }
-        return StringUtils.EMPTY_STRING;
-    }
-
-    /**
-     * 转换tag
+     * convert tags
+     * @param sofaTracerSpan
+     * @param swSpan span in SkyWalking format
+     * @return span with tags in SkyWalking format
      */
     private Span convertSpanTags(SofaTracerSpan sofaTracerSpan, Span swSpan) {
         Map<String, Object> tags = new LinkedHashMap<>();
@@ -174,24 +174,24 @@ public class SkywalkingSegmentAdapter {
         tags.putAll(sofaTracerSpan.getTagsWithBool());
         tags.putAll(sofaTracerSpan.getTagsWithNumber());
         for (Map.Entry<String, Object> tag : tags.entrySet()) {
-            //number Boolean 和 string转换成string一样的么
             swSpan.addTag(tag.getKey(), tag.getValue().toString());
         }
         return swSpan;
     }
 
     /**
-     * 转换logs
+     *
+     * @param sofaTracerSpan
+     * @param swSpan
+     * @return span with logs in SkyWalking format
      */
     private Span convertSpanLogs(SofaTracerSpan sofaTracerSpan, Span swSpan) {
         List<LogData> logs = sofaTracerSpan.getLogs();
         for (LogData sofaLog : logs) {
-            //log里面的数据是一个long类型的时间，和一个Map<String,?>类型的
             Log log = new Log();
             log.setTime(sofaLog.getTime());
-            //需要把map里面的数据都转换成 KeyStringValuePair
+            //KeyStringValuePair
             for (Map.Entry<String, ?> entry : sofaLog.getFields().entrySet()) {
-                //有没有更加优雅的方式？ SW中上传的tags只能是String类型的？？
                 log.addLogs(entry.getKey(), entry.getValue().toString());
             }
             swSpan.addLog(log);
@@ -200,32 +200,19 @@ public class SkywalkingSegmentAdapter {
     }
 
     /**
-     * 添加reference
+     * when sofaTracer Span is not root span we add add reference to point to parent segment
+     * @param sofaTracerSpan
+     * @param swSpan
+     * @return span with segment reference in SkyWalking format
      */
     private Span addSegmentReference(SofaTracerSpan sofaTracerSpan, Span swSpan) {
-        //添加ref
         SegmentReference segmentReference = new SegmentReference();
-        //全部都设置成跨进程的？？,使用unrecognize不会绘制拓扑图
+        //default set to crossProcess
         segmentReference.setRefType(RefType.CrossProcess);
         segmentReference.setTraceId(sofaTracerSpan.getSofaTracerSpanContext().getTraceId());
-        //segmentId保留的SofaTracer中的spanId
-        //父segment的Id
         segmentReference.setParentTraceSegmentId(getParentSegmentId(sofaTracerSpan));
-        //因为一个segment只有一个span所以直接取固定值0
+        //because there is only one span in each segment so parentId is 0
         segmentReference.setParentSpanId(0);
-
-        //        segmentReference.setParentService("dubbo-consumer");
-        //        segmentReference.setParentServiceInstance("dubbo-consumer@172.28.16.1");
-        //        segmentReference.setParentEndpoint("HelloService#SayHello");
-
-        //        //        a目前父组件的serviceNme还取不到？？
-        //        segmentReference .setParentService("hello");
-        //        //        父组件的服务实例名称也还没有相关字段！！
-        //        segmentReference .setParentServiceInstance("no2");
-        //        //调用父组件的entry span的URL路径，是opration name么
-        //        segmentReference .setParentEndpoint(getParentEndpoint(sofaTracerSpan));
-
-        //        按照127.0.0.1:8080的格式组织的，目前也是还没有找到对应字段！！
         String networkAddressUsedAtPeer = getNetworkAddressUsedAtPeer(sofaTracerSpan);
         if (networkAddressUsedAtPeer != null) {
             segmentReference.setNetworkAddressUsedAtPeer(networkAddressUsedAtPeer);
@@ -234,29 +221,10 @@ public class SkywalkingSegmentAdapter {
         return swSpan;
     }
 
-    /**
-     * 判断是否出现了错误
-     */
-    private boolean isError(SofaTracerSpan sofaTracerSpan) {
-        return !SofaTracerConstant.RESULT_CODE_SUCCESS.equals(sofaTracerSpan.getTagsWithStr().get(
-            CommonSpanTags.RESULT_CODE));
-    }
-
-    /**
-     * 生成NetworkAddressUsedAtPeer
-     */
-    // The network address, including ip/hostname and port, which is used in the client side.
-    // Such as Client --> use 127.0.11.8:913 -> Server
-    // then, in the reference of entry span reported by Server, the value of this field is 127.0.11.8:913.
-    // This plays the important role in the SkyWalking STAM(Streaming Topology Analysis Method)
-    // For more details, read https://wu-sheng.github.io/STAM/
-    // 不能拿到？
     private String getNetworkAddressUsedAtPeer(SofaTracerSpan sofaTracerSpan) {
-
         // if is sofaRpc get localIp
-        if (sofaTracerSpan.getSofaTracer().getTracerType().equals("RPC_TRACER")) {
+        if (sofaTracerSpan.getSofaTracer().getTracerType().equals(ComponentNameConstants.SOFA_RPC)) {
             return NetUtils.getLocalIpv4();
-            //            return "127.0.0.1";
         }
         Map<String, String> strTags = sofaTracerSpan.getTagsWithStr();
         String host = strTags.get(CommonSpanTags.LOCAL_HOST);
@@ -267,34 +235,39 @@ public class SkywalkingSegmentAdapter {
         return null;
     }
 
-    /**
-     * 获取tracerType对应的componentId
-     */
     private int getComponentId(SofaTracerSpan sofaTracerSpan) {
         String tracerType = sofaTracerSpan.getSofaTracer().getTracerType();
         final int UNKNOWN = ComponentName2ComponentId.componentName2IDMap.get("UNKNOWN");
         if (StringUtils.isBlank(tracerType)) {
             return UNKNOWN;
         }
+        // specific type of database instead of datasource
         if (tracerType.equals(ComponentNameConstants.DATA_SOURCE)) {
             String database = sofaTracerSpan.getTagsWithStr().get("database.type");
             if (StringUtils.isBlank(database)) {
                 return UNKNOWN;
-            } else {
-                //如果不是null，才返回
-                if (ComponentName2ComponentId.componentName2IDMap.containsKey(database)) {
-                    return ComponentName2ComponentId.componentName2IDMap.get(database);
-                }
-                return UNKNOWN;
             }
-        }
-
-        // 如果在map里面找不到也不应该返回null，应该返回的是一个int  ===bug==
-        if (ComponentName2ComponentId.componentName2IDMap.containsKey(tracerType)) {
-            return ComponentName2ComponentId.componentName2IDMap.get(tracerType);
-        } else {
+            if (ComponentName2ComponentId.componentName2IDMap.containsKey(database)) {
+                return ComponentName2ComponentId.componentName2IDMap.get(database);
+            }
             return UNKNOWN;
         }
+        if (ComponentName2ComponentId.componentName2IDMap.containsKey(tracerType)) {
+            return ComponentName2ComponentId.componentName2IDMap.get(tracerType);
+        }
+        return UNKNOWN;
+
+    }
+
+    private boolean isHttpOrMvcSuccess(String resultCode) {
+        return resultCode.charAt(0) == '1' || resultCode.charAt(0) == '2'
+               || "302".equals(resultCode.trim()) || ("301".equals(resultCode.trim()));
+    }
+
+    private boolean isWebHttpClientSuccess(String resultCode) {
+        return StringUtils.isNotBlank(resultCode)
+               && (isHttpOrMvcSuccess(resultCode) || SofaTracerConstant.RESULT_CODE_SUCCESS
+                   .equals(resultCode));
     }
 
     /**

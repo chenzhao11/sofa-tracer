@@ -26,4 +26,9 @@ import lombok.Setter;
 public class KeyStringValuePair {
     private String key;
     private String value;
+
+    @Override
+    public String toString() {
+        return "KeyStringValuePair{" + "key='" + key + '\'' + ", value='" + value + '\'' + '}';
+    }
 }

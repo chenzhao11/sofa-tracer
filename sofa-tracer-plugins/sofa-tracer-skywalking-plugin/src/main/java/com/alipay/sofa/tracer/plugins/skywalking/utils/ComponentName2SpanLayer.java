@@ -21,37 +21,31 @@ import com.alipay.sofa.tracer.plugins.skywalking.model.SpanLayer;
 
 import java.util.HashMap;
 
+/**
+ * map componentName in sofaTracer to SpanLayer in SkyWalking
+ */
 public class ComponentName2SpanLayer {
-    // ComponentNameConstants不是Enum
     public static final HashMap<String, SpanLayer> map = new HashMap<>();
     static {
-
-        //为什么SofaRpc的tracertype 是RPC_TRACER？
-
         map.put(ComponentNameConstants.DATA_SOURCE, SpanLayer.Database);
         map.put(ComponentNameConstants.DUBBO_CLIENT, SpanLayer.RPCFramework);
         map.put(ComponentNameConstants.DUBBO_SERVER, SpanLayer.RPCFramework);
+        map.put(ComponentNameConstants.SOFA_RPC, SpanLayer.RPCFramework);
         map.put(ComponentNameConstants.HTTP_CLIENT, SpanLayer.Http);
         map.put(ComponentNameConstants.OK_HTTP, SpanLayer.Http);
         map.put(ComponentNameConstants.REST_TEMPLATE, SpanLayer.Http);
         map.put(ComponentNameConstants.SPRING_MVC, SpanLayer.Http);
-
         map.put(ComponentNameConstants.FLEXIBLE, SpanLayer.Http);
-        map.put(ComponentNameConstants.MSG_PUB, SpanLayer.RPCFramework);
-        map.put(ComponentNameConstants.MSG_SUB, SpanLayer.RPCFramework);
-
         map.put(ComponentNameConstants.FEIGN_CLIENT, SpanLayer.Http);
-
         map.put(ComponentNameConstants.KAFKAMQ_CONSUMER, SpanLayer.MQ);
         map.put(ComponentNameConstants.KAFKAMQ_SEND, SpanLayer.MQ);
-
         map.put(ComponentNameConstants.ROCKETMQ_CONSUMER, SpanLayer.MQ);
         map.put(ComponentNameConstants.ROCKETMQ_SEND, SpanLayer.MQ);
         map.put(ComponentNameConstants.RABBITMQ_CONSUMER, SpanLayer.MQ);
         map.put(ComponentNameConstants.RABBITMQ_SEND, SpanLayer.MQ);
-
+        map.put(ComponentNameConstants.MSG_PUB, SpanLayer.MQ);
+        map.put(ComponentNameConstants.MSG_SUB, SpanLayer.MQ);
         map.put(ComponentNameConstants.MONGO_CLIENT, SpanLayer.Cache);
         map.put(ComponentNameConstants.REDIS, SpanLayer.Cache);
-        map.put(ComponentNameConstants.SOFA_RPC, SpanLayer.RPCFramework);
     }
 }

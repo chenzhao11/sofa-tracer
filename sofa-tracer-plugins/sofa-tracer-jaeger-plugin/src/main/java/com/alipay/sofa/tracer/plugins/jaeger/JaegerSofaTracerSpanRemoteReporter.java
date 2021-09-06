@@ -16,12 +16,10 @@
  */
 package com.alipay.sofa.tracer.plugins.jaeger;
 
-import com.alipay.common.tracer.core.configuration.SofaTracerConfiguration;
 import com.alipay.common.tracer.core.listener.SpanReportListener;
 import com.alipay.common.tracer.core.span.SofaTracerSpan;
 import com.alipay.sofa.tracer.plugins.jaeger.adapter.JaegerSpanAdapter;
-import com.alipay.sofa.tracer.plugins.jaeger.properties.JaegerProperties;
-import com.alipay.sofa.tracer.plugins.jaeger.utils.NetUtils;
+import com.alipay.common.tracer.core.utils.NetUtils;
 import io.jaegertracing.internal.JaegerTracer;
 import io.jaegertracing.internal.reporters.RemoteReporter;
 import io.jaegertracing.thrift.internal.senders.HttpSender;

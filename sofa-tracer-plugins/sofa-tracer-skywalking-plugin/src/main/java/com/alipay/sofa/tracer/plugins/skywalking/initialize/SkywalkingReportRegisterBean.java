@@ -27,12 +27,9 @@ import org.springframework.beans.factory.InitializingBean;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- *  在非Spring Boot工程中可以用来解析配置属性以及注册上报监听
- */
 public class SkywalkingReportRegisterBean implements InitializingBean {
     @Override
-    public void afterPropertiesSet() throws Exception {
+    public void afterPropertiesSet() {
         // if do not match report condition,it will be return right now
         boolean enabled = false;
         String enabledStr = SofaTracerConfiguration
@@ -43,13 +40,12 @@ public class SkywalkingReportRegisterBean implements InitializingBean {
         if (!enabled) {
             return;
         }
-        //默认baseUrl是 http://localhost:12800
         String baseUrl = SofaTracerConfiguration.getProperty(
             SkywalkingProperties.SKYWALKING_BASE_URL_KEY, "http://localhost:12800");
-        int maxBufferSize = Integer.valueOf(SofaTracerConfiguration.getProperty(
-            SkywalkingProperties.SKYWALKING_MAX_BUFFER_SIZE_KEY, "10000"));
-
-        SpanReportListener spanReportListener = new SkywalkingSpanRemoteReporter(baseUrl, maxBufferSize);
+        int maxBufferSize = SofaTracerConfiguration.getIntegerDefaultIfNull(
+            SkywalkingProperties.SKYWALKING_MAX_BUFFER_SIZE_KEY, 10000);
+        SpanReportListener spanReportListener = new SkywalkingSpanRemoteReporter(baseUrl,
+            maxBufferSize);
         List<SpanReportListener> spanReportListenerList = new ArrayList<SpanReportListener>();
         spanReportListenerList.add(spanReportListener);
         SpanReportListenerHolder.addSpanReportListeners(spanReportListenerList);

@@ -29,53 +29,46 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-
 public class AsyncReporter implements Closeable, Flushable {
-    final AtomicBoolean          closed             = new AtomicBoolean(false);
-    final ReentrantLock lock      = new ReentrantLock(false);
-    final Condition     available = lock.newCondition();
-    final Segment[]     segments;
-    final int[] sizesInBytes;
-    // 缓冲数组的大小
-    final int                    maxBufferSize;
+    final Segment[]              segments;
+    final int[]                  sizesInBytes;
+    final int                    maxBufferSize;                                    // the max num of segment
     SkywalkingRestTemplateSender sender;
-    //记录缓存中当前有多少个segment
-    int                          count              = 0;
-    int                          writePos           = 0;
-    int                          readPos            = 0;
-    // 在关闭reporter线程的时候应该先等数据上报完成
-    final CountDownLatch         close              = new CountDownLatch(1);
-
-    // 是sender的最大值zipkin中是默认值2M
-    int messageMaxBytes = 2 * 1024 * 1024;
-    // 默认是1秒
-    long messageTimeoutNanos = TimeUnit.SECONDS.toNanos(1);
-    long closeTimeoutNanos = TimeUnit.SECONDS.toNanos(1);
+    int                          count               = 0;                          //how many segment in the array
+    int                          writePos            = 0;
+    int                          readPos             = 0;
+    int                          messageMaxBytes     = 2 * 1024 * 1024;            // max packetSize is 2M
+    long                         messageTimeoutNanos = TimeUnit.SECONDS.toNanos(1);
+    long                         closeTimeoutNanos   = TimeUnit.SECONDS.toNanos(1);
+    final AtomicBoolean          closed              = new AtomicBoolean(false);
+    final ReentrantLock          lock                = new ReentrantLock(false);
+    final Condition              available           = lock.newCondition();
+    final CountDownLatch         close               = new CountDownLatch(1);
 
     /**
-     *
-     * 创建reporter的同时创建一个定时任务
-     * @param maxBufferSize Segment缓存数组的最大容量
-     * @param sender 发送segments的sender
+     * when create a new reporter will start a new thread to flush segment into one message,
+     * when the message size bigger than threshold or remaining time no more than 0, it's time to
+     * send the message
+     * @param maxBufferSize the size of the segment buffer
+     * @param sender sender to send the message
      */
     public AsyncReporter(int maxBufferSize, SkywalkingRestTemplateSender sender) {
         this.maxBufferSize = maxBufferSize;
         this.segments = new Segment[maxBufferSize];
         this.sizesInBytes = new int[maxBufferSize];
         this.sender = sender;
-        // 存放消息缓冲区
+        // many segments are bundled into one message
         final Message message = new Message(messageMaxBytes, messageTimeoutNanos);
-        final Thread flushThread = new Thread("AsyncReporter{" + sender + "}") {
-            @Override public void run() {
+        final Thread flushThread = new Thread("AsyncReporter") {
+            @Override
+            public void run() {
                 try {
                     while (!closed.get()) {
-                        //没有结束不断的刷新
                         flush(message);
                     }
                 } catch (RuntimeException | Error e) {
-                    SelfLog.warn("Unexpected error flushing spans" , e);
+                    SelfLog.warn("Unexpected error flushing spans", e);
                 } finally {
-
                     if (count > 0) {
                         SelfLog.warn("Dropped " + count + " spans due to AsyncReporter.close()");
                     }
@@ -90,59 +83,62 @@ public class AsyncReporter implements Closeable, Flushable {
     public void report(Segment segment, int segmentByteSize) {
         if (segment == null)
             throw new NullPointerException("segment == null");
-        //如果reporter已经关闭或者添加到队列中失败直接把segment丢弃
+        //if already closed or the segment Array is full just dropping the segment
         if (closed.get() || !addSegment(segment, segmentByteSize)) {
-            SelfLog.warn("Dropped one segment because reporter is close or segment queue is full ");
+            SelfLog.warn("Dropped one span because reporter is close or buffer queue is full ");
         }
     }
 
     /**
-     * flush 创建的线程不断的调用如果达到时间显示或者是容量限制就发送数据
-     * @param message segment的缓冲区
+     * a new thread will call this function in a synchronous loop until the reporter is closed
+     * @param message
      */
 
-    public void flush(Message message){
-        // 如果已经结束了抛出异常
-        if (closed.get()) throw new IllegalStateException("closed");
-        // 把数据加入到message队列中
+    public void flush(Message message) {
+        if (closed.get())
+            throw new IllegalStateException("closed");
+        // drain segment in the segment array as many as possible
         drainTo(message, message.remainingNanos());
-        // 判断是不是可以发送message中的数据了
-        // loop around if we are running, and the bundle isn't full
-        // if we are closed, try to send what's pending
-        if (!message.isReady() && !closed.get()) return;
-        // 发送message中的数据
+        if (!message.isReady() && !closed.get())
+            return;
+        // send the message
         try {
-            sender.post(message.getMessage());
+            if (!sender.post(message.getMessage())) {
+                int count = message.getCount();
+                SelfLog.warn("Dropped " + count + " spans, result code is not 2XX");
+            }
         } catch (RuntimeException | Error t) {
             // In failure case, we increment messages and spans dropped.
             int count = message.getCount();
             SelfLog.warn("Dropped " + count + " spans", t);
             // Raise in case the sender was closed out-of-band.
-            if (t instanceof IllegalStateException) throw (IllegalStateException) t;
+            if (t instanceof IllegalStateException)
+                throw (IllegalStateException) t;
         } finally {
-            //发送结束重置message
             message.reset();
         }
     }
 
     /**
-     * 向数组中加入segment，如果添加成功返回true，添加失败返回false
+     * add segment to the segment array
+     * @param segment segment to add
+     * @param segmentByteSize the size of segment to add
+     * @return whether the operation is successful
      */
     private boolean addSegment(Segment segment, int segmentByteSize) {
         lock.lock();
         try {
-            //队列中已经满了
             if (count == maxBufferSize)
                 return false;
             segments[writePos] = segment;
             sizesInBytes[writePos] = segmentByteSize;
             writePos++;
-            //当新的位置超出界限过后，回到头部
+            //back to the head
             if (writePos == maxBufferSize)
                 writePos = 0;
             count++;
-            // 加入成功，通知等待的
-            available.signal(); // alert any drainers
+            // add successfully, alert any drainers
+            available.signal();
             return true;
         } finally {
             lock.unlock();
@@ -150,7 +146,8 @@ public class AsyncReporter implements Closeable, Flushable {
     }
 
     /**
-     * 把数组中的数据清空返回清空的segment的数量，可以统计丢失segment数量
+     * clear the data buffered
+     * @return how many segments are removed
      */
     private int clear() {
         lock.lock();
@@ -158,29 +155,27 @@ public class AsyncReporter implements Closeable, Flushable {
             int result = count;
             count = readPos = writePos = 0;
             Arrays.fill(segments, null);
+            Arrays.fill(sizesInBytes, 0);
             return result;
         } finally {
             lock.unlock();
         }
     }
 
-
     /**
      *  Blocks for up to nanosTimeout for spans to appear. Then, consume as many as possible.
-     *  把当前queue中的数据加入到message中
-     * @param message
-     * @param nanosTimeout message中的remainingNanos
-     * @return
+     * @param message message to receive the segment
+     * @param nanosTimeout  remaining time to send the message
+     * @return how many segments are add to message
      */
     int drainTo(Message message, long nanosTimeout) {
         try {
-            // This may be called by multiple threads. If one is holding a lock, another is waiting. We
-            // use lockInterruptibly to ensure the one waiting can be interrupted.
             lock.lockInterruptibly();
             try {
                 long nanosLeft = nanosTimeout;
                 while (count == 0) {
-                    if (nanosLeft <= 0) return 0;
+                    if (nanosLeft <= 0)
+                        return 0;
                     nanosLeft = available.awaitNanos(nanosLeft);
                 }
                 return doDrain(message);
@@ -192,19 +187,24 @@ public class AsyncReporter implements Closeable, Flushable {
         }
     }
 
+    /**
+     * add segments to the message as many as possible
+     * @param message
+     * @return the count of segment added to message
+     */
     int doDrain(Message message) {
         int drainedCount = 0;
-        // 尽可能读segment到message中除非时间和容量限制
         while (drainedCount < count) {
             Segment next = segments[readPos];
             int nextSizeInBytes = sizesInBytes[readPos];
-
-            if (next == null) break;
+            if (next == null)
+                break;
             if (message.offer(next, nextSizeInBytes)) {
                 drainedCount++;
                 segments[readPos] = null;
                 sizesInBytes[readPos] = 0;
-                if (++readPos == segments.length) readPos = 0; // circle back to the front of the array
+                if (++readPos == segments.length)
+                    readPos = 0; // circle back to the front of the array
             } else {
                 break;
             }
@@ -215,7 +215,8 @@ public class AsyncReporter implements Closeable, Flushable {
 
     @Override
     public void close() throws IOException {
-        if (!closed.compareAndSet(false, true)) return; // already closed
+        if (!closed.compareAndSet(false, true))
+            return; // already closed
         try {
             // wait for in-flight spans to send
             if (!close.await(closeTimeoutNanos, TimeUnit.NANOSECONDS)) {
@@ -231,11 +232,9 @@ public class AsyncReporter implements Closeable, Flushable {
         }
     }
 
-    @Override public void flush() throws IOException {
-        // timeoutNanos 设置成0马上发送所有缓存的segment
-        flush(new Message(messageMaxBytes,0L));
+    @Override
+    public void flush() throws IOException {
+        // timeoutNanos equals 0, so will send immediately
+        flush(new Message(messageMaxBytes, 0L));
     }
 }
-
-
-

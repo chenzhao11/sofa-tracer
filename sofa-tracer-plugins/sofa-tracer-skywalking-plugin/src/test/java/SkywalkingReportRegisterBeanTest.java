@@ -14,8 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package initialize;
-
 import com.alipay.common.tracer.core.listener.SpanReportListenerHolder;
 import com.alipay.sofa.tracer.plugins.skywalking.initialize.SkywalkingReportRegisterBean;
 import org.junit.Assert;
@@ -33,9 +31,8 @@ public class SkywalkingReportRegisterBeanTest {
 
     @Test
     public void testAfterPropertiesSet() {
-        Object zipkinReportRegisterBean = applicationContext
-            .getBean("SkywalkingReportRegisterBean");
-        Assert.assertTrue(zipkinReportRegisterBean instanceof SkywalkingReportRegisterBean);
+        Object reportRegisterBean = applicationContext.getBean("SkywalkingReportRegisterBean");
+        Assert.assertTrue(reportRegisterBean instanceof SkywalkingReportRegisterBean);
         Assert.assertTrue(SpanReportListenerHolder.getSpanReportListenersHolder().size() > 0);
     }
 }

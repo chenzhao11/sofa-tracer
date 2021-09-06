@@ -27,10 +27,10 @@ import com.alipay.sofa.tracer.plugins.skywalking.model.Segment;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.Closeable;
+import java.io.Flushable;
 import java.io.IOException;
 
-public class SkywalkingSpanRemoteReporter implements SpanReportListener, Closeable {
-    // 三个需要转换的对象  TraceSegment ExitSpan EntrySpan
+public class SkywalkingSpanRemoteReporter implements SpanReportListener, Closeable, Flushable {
     private AsyncReporter                reporter;
     private SkywalkingRestTemplateSender sender;
     private SkywalkingSegmentAdapter     adapter;
@@ -56,4 +56,8 @@ public class SkywalkingSpanRemoteReporter implements SpanReportListener, Closeab
         reporter.close();
     }
 
+    @Override
+    public void flush() throws IOException {
+        reporter.flush();
+    }
 }

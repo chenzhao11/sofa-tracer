@@ -18,12 +18,12 @@ package com.alipay.sofa.tracer.plugins.skywalking.model;
 
 public enum SpanLayer {
 
-    // 小写的原因是上传的时候需要使用小写
+    // need to user lowercase for uploading segment
     Unknown(0), Database(1), RPCFramework(2), Http(3), MQ(4), Cache(5);
 
     private int code;
 
-    private SpanLayer(int code) {
+    SpanLayer(int code) {
         this.code = code;
     }
 
