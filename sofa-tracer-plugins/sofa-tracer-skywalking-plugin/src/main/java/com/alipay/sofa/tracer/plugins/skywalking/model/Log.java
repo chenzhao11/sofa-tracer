@@ -22,6 +22,10 @@ import lombok.Setter;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * Log
+ * @author zhaochen
+ */
 @Getter
 @Setter
 public class Log {

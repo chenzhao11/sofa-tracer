@@ -16,6 +16,10 @@
  */
 package com.alipay.sofa.tracer.plugins.skywalking.model;
 
+/**
+ * SpanType
+ * @author zhaochen
+ */
 public enum SpanType {
     Entry(0), Exit(1), Local(2), UNRECOGNIZED(-1);
     private int id;

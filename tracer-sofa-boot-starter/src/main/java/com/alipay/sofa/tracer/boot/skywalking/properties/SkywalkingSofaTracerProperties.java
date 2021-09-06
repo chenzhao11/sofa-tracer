@@ -18,6 +18,10 @@ package com.alipay.sofa.tracer.boot.skywalking.properties;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+/**
+ * SkywalkingSofaTracerProperties
+ * @author zhaochen
+ */
 @ConfigurationProperties("com.alipay.sofa.tracer.skywalking")
 public class SkywalkingSofaTracerProperties {
 

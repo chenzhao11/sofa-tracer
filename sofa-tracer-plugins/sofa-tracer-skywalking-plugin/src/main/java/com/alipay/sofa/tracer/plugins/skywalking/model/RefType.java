@@ -16,6 +16,10 @@
  */
 package com.alipay.sofa.tracer.plugins.skywalking.model;
 
+/**
+ * RefType
+ * @author zhaochen
+ */
 public enum RefType {
     CrossProcess(0), CrossThread(1), UNRECOGNIZED(-1);
     private int id;

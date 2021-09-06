@@ -19,6 +19,10 @@ package com.alipay.sofa.tracer.plugins.skywalking.model;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * SegmentReference
+ * @author zhaochen
+ */
 @Setter
 @Getter
 public class SegmentReference {

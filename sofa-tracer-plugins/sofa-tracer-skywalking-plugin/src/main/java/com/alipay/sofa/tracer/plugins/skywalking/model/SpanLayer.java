@@ -16,6 +16,10 @@
  */
 package com.alipay.sofa.tracer.plugins.skywalking.model;
 
+/**
+ * SpanLayer
+ * @author zhaochen
+ */
 public enum SpanLayer {
 
     // need to user lowercase for uploading segment

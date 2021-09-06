@@ -22,6 +22,7 @@ import java.util.HashMap;
 
 /**
  * map ComponentName in SOFATracer to ComponentId in SkyWalking
+ * @author zhaochen
  */
 public class ComponentName2ComponentId {
     public static final HashMap<String, Integer> componentName2IDMap = new HashMap<>();

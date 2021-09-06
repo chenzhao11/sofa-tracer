@@ -20,6 +20,10 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * KeyStringValuePair
+ * @author zhaochen
+ */
 @Getter
 @Setter
 @AllArgsConstructor

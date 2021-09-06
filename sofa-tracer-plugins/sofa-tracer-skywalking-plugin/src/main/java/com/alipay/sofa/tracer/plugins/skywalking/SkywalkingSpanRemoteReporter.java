@@ -30,6 +30,10 @@ import java.io.Closeable;
 import java.io.Flushable;
 import java.io.IOException;
 
+/**
+ * SkywalkingSpanRemoteReporter
+ * @author zhaochen
+ */
 public class SkywalkingSpanRemoteReporter implements SpanReportListener, Closeable, Flushable {
     private AsyncReporter                reporter;
     private SkywalkingRestTemplateSender sender;

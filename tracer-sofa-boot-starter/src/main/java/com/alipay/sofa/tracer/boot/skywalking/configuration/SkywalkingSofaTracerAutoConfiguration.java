@@ -27,6 +27,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 
+/**
+ * SkywalkingSofaTracerAutoConfiguration
+ * @author zhaochen
+ */
 @Configuration
 @EnableConfigurationProperties(SkywalkingSofaTracerProperties.class)
 @ConditionalOnProperty(value = "com.alipay.sofa.tracer.skywalking.enabled", matchIfMissing = false)

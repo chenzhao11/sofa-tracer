@@ -32,6 +32,10 @@ import org.junit.Test;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * SkywalkingSegmentAdapterTest
+ * @author zhaochen
+ */
 public class SkywalkingSegmentAdapterTest {
     private SkywalkingSegmentAdapter adapter    = new SkywalkingSegmentAdapter();
 

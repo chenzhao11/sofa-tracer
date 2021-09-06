@@ -23,6 +23,7 @@ import java.util.HashMap;
 
 /**
  * map componentName in sofaTracer to SpanLayer in SkyWalking
+ * @author zhaochen
  */
 public class ComponentName2SpanLayer {
     public static final HashMap<String, SpanLayer> map = new HashMap<>();

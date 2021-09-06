@@ -29,6 +29,10 @@ import org.junit.Test;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * SkywalkingSpanRemoteReporterTest
+ * @author zhaochen
+ */
 public class SkywalkingSpanRemoteReporterTest {
     private SkywalkingSpanRemoteReporter reporter;
 

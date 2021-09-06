@@ -23,13 +23,15 @@ import lombok.Setter;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * Span
+ * @author zhaochen
+ */
 @Getter
 @Setter
-/**
- * so the detail of span :
- * https://github.com/apache/skywalking-data-collect-protocol/blob/e626ee04850703c220f64b642d2893fa65572943/language-agent/Tracing.proto
- */
 public class Span {
+    //so the detail of span :
+    //https://github.com/apache/skywalking-data-collect-protocol/blob/e626ee04850703c220f64b642d2893fa65572943/language-agent/Tracing.proto
     private int                      spanId;
     private int                      parentSpanId;
     private Long                     startTime;

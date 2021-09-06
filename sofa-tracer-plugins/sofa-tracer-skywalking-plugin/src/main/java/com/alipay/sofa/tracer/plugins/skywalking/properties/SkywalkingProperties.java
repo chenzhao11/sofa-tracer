@@ -16,6 +16,10 @@
  */
 package com.alipay.sofa.tracer.plugins.skywalking.properties;
 
+/**
+ * SkywalkingProperties
+ * @author zhaochen
+ */
 public class SkywalkingProperties {
     public static final String SKYWALKING_IS_ENABLED_KEY      = "com.alipay.sofa.tracer.skywalking.enabled";
     public static final String SKYWALKING_BASE_URL_KEY        = "com.alipay.sofa.tracer.skywalking.baseUrl";

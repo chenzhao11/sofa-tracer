@@ -34,6 +34,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * SkywalkingRestTemplateSenderTest
+ * @author zhaochen
+ */
 public class SkywalkingRestTemplateSenderTest {
     private final String                 tracerType = ComponentNameConstants.REDIS;
     private SkywalkingSegmentAdapter     adapter    = new SkywalkingSegmentAdapter();

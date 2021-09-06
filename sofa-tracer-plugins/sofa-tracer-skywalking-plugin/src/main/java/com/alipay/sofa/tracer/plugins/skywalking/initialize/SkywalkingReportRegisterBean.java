@@ -27,6 +27,10 @@ import org.springframework.beans.factory.InitializingBean;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * SkywalkingReportRegisterBean
+ * @author zhaochen
+ */
 public class SkywalkingReportRegisterBean implements InitializingBean {
     @Override
     public void afterPropertiesSet() {

@@ -24,6 +24,10 @@ import org.springframework.web.client.RestTemplate;
 import java.net.URI;
 import java.util.List;
 
+/**
+ * SkywalkingRestTemplateSender
+ * @author zhaochen
+ */
 public class SkywalkingRestTemplateSender {
     private RestTemplate restTemplate;
     private String       url;

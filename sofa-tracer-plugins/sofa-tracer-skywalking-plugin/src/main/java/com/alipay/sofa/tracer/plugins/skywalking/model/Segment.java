@@ -22,6 +22,10 @@ import lombok.Setter;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * Segment
+ * @author zhaochen
+ */
 @Getter
 @Setter
 public class Segment {

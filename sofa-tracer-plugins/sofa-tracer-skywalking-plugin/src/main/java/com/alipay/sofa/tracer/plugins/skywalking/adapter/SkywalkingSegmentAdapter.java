@@ -38,6 +38,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * SkywalkingSegmentAdapter
+ * @author zhaochen
+ */
+
 public class SkywalkingSegmentAdapter {
     /**
      * convert sofaTracerSpan to segment in Skywalking

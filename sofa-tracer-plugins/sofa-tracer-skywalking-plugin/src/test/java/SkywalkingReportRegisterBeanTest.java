@@ -21,6 +21,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
+/**
+ * SkywalkingReportRegisterBeanTest
+ * @author zhaochen
+ */
 public class SkywalkingReportRegisterBeanTest {
     private ClassPathXmlApplicationContext applicationContext;
 

@@ -20,6 +20,10 @@ import com.alipay.sofa.tracer.plugins.skywalking.model.Segment;
 
 import java.util.ArrayList;
 
+/**
+ * Message
+ * @author zhaochen
+ */
 public class Message {
     final int                maxBytes;
     // max time to wait for sending next message

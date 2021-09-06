@@ -29,6 +29,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * AsyncReporter
+ * @author zhaochen
+ */
 public class AsyncReporter implements Closeable, Flushable {
     final Segment[]              segments;
     final int[]                  sizesInBytes;

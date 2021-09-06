@@ -61,10 +61,6 @@
         </dependency>
         <dependency>
             <groupId>com.alipay.sofa</groupId>
-            <artifactId>sofa-tracer-jaeger-plugin</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.alipay.sofa</groupId>
             <artifactId>sofa-tracer-skywalking-plugin</artifactId>
         </dependency>
         <dependency>
@@ -185,13 +181,6 @@
             <groupId>io.zipkin.reporter2</groupId>
             <artifactId>zipkin-reporter</artifactId>
             <version>2.7.15</version>
-            <optional>true</optional>
-        </dependency>
-        <!-- Jaeger optional : add manually -->
-        <dependency>
-            <groupId>io.jaegertracing</groupId>
-            <artifactId>jaeger-client</artifactId>
-            <version>1.6.0</version>
             <optional>true</optional>
         </dependency>
 
