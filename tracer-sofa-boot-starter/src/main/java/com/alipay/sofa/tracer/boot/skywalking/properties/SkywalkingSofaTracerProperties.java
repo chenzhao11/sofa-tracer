@@ -27,7 +27,7 @@ public class SkywalkingSofaTracerProperties {
 
     private String  baseUrl       = "http://localhost:12800/";
     private boolean enabled       = false;
-    // size of the buffer array
+    // size of the buffer
     private int     maxBufferSize = 10000;
 
     public String getBaseUrl() {
