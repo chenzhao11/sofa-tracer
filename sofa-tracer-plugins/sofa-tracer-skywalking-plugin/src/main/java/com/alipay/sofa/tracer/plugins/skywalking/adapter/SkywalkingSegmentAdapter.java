@@ -102,7 +102,7 @@ public class SkywalkingSegmentAdapter {
         span.setComponentId(getComponentId(sofaTracerSpan));
         span.setError(!isWebHttpClientSuccess(sofaTracerSpan.getTagsWithStr().get(
             CommonSpanTags.RESULT_CODE)));
-        span.setSkipAnalysis(true);
+        span.setSkipAnalysis(false);
         span = convertSpanTags(sofaTracerSpan, span);
         convertSpanLogs(sofaTracerSpan, span);
         // if has patentId then need to add segmentReference
