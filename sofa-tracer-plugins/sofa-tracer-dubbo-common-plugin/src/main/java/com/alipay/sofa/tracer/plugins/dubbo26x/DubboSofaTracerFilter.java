@@ -57,6 +57,7 @@ import static com.alipay.common.tracer.core.constants.SofaTracerConstant.SPACE_I
 /**
  * @author: guolei.sgl (guolei.sgl@antfin.com) 2019/2/26 2:02 PM
  * @since: 2.3.4
+ * 需要更新SW中的相关字段
  **/
 @Activate(group = { Constants.PROVIDER, Constants.CONSUMER }, order = 1)
 public class DubboSofaTracerFilter implements Filter {

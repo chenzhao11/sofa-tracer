@@ -18,6 +18,7 @@ package com.alipay.sofa.tracer.plugins.skywalking.adapter;
 
 import com.alipay.common.tracer.core.constants.ComponentNameConstants;
 import com.alipay.common.tracer.core.constants.SofaTracerConstant;
+import com.alipay.common.tracer.core.context.span.SofaTracerSpanContext;
 import com.alipay.common.tracer.core.span.CommonSpanTags;
 import com.alipay.common.tracer.core.span.LogData;
 import com.alipay.common.tracer.core.span.SofaTracerSpan;
@@ -211,6 +212,7 @@ public class SkywalkingSegmentAdapter {
      * @return span with segment reference in SkyWalking format
      */
     private Span addSegmentReference(SofaTracerSpan sofaTracerSpan, Span swSpan) {
+        SofaTracerSpanContext spanContext = sofaTracerSpan.getSofaTracerSpanContext();
         SegmentReference segmentReference = new SegmentReference();
         //default set to crossProcess
         segmentReference.setRefType(RefType.CrossProcess);
@@ -218,6 +220,10 @@ public class SkywalkingSegmentAdapter {
         segmentReference.setParentTraceSegmentId(getParentSegmentId(sofaTracerSpan));
         //because there is only one span in each segment so parentId is 0
         segmentReference.setParentSpanId(0);
+        segmentReference.setParentService(spanContext.getParentService());
+        segmentReference.setParentServiceInstance(spanContext.getParentServiceInstance());
+        segmentReference.setParentEndpoint(spanContext.getParentOperationName());
+
         String networkAddressUsedAtPeer = getNetworkAddressUsedAtPeer(sofaTracerSpan);
         if (networkAddressUsedAtPeer != null) {
             segmentReference.setNetworkAddressUsedAtPeer(networkAddressUsedAtPeer);

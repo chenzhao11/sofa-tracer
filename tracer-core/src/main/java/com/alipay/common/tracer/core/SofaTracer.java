@@ -28,9 +28,11 @@ import com.alipay.common.tracer.core.reporter.facade.Reporter;
 import com.alipay.common.tracer.core.samplers.Sampler;
 import com.alipay.common.tracer.core.samplers.SamplerFactory;
 import com.alipay.common.tracer.core.samplers.SamplingStatus;
+import com.alipay.common.tracer.core.span.CommonSpanTags;
 import com.alipay.common.tracer.core.span.SofaTracerSpan;
 import com.alipay.common.tracer.core.span.SofaTracerSpanReferenceRelationship;
 import com.alipay.common.tracer.core.utils.AssertUtils;
+import com.alipay.common.tracer.core.utils.NetUtils;
 import com.alipay.common.tracer.core.utils.StringUtils;
 import com.alipay.sofa.common.code.LogCode2Description;
 import io.opentracing.References;
@@ -39,6 +41,7 @@ import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
 
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -307,6 +310,14 @@ public class SofaTracer implements Tracer {
             SofaTracerSpan sofaTracerSpan = new SofaTracerSpan(SofaTracer.this, begin,
                 this.references, this.operationName, sofaTracerSpanContext, this.tags);
 
+            //如果已经有local.app可以设置spanContext的参数
+            if (tags.containsKey(CommonSpanTags.LOCAL_APP)) {
+                String service = (String) tags.get(CommonSpanTags.LOCAL_APP);
+                InetAddress address = NetUtils.getLocalAddress();
+                String instance = service + "@" + address.getHostAddress();
+                sofaTracerSpanContext.setParams(service, instance, operationName);
+            }
+
             // calculate isSampled，but do not change parent's sampler behaviour
             boolean isSampled = calculateSampler(sofaTracerSpan);
             sofaTracerSpanContext.setSampled(isSampled);
@@ -344,6 +355,9 @@ public class SofaTracer implements Tracer {
             SofaTracerSpanContext sofaTracerSpanContext = new SofaTracerSpanContext(
                 preferredReference.getTraceId(), preferredReference.nextChildContextId(),
                 preferredReference.getSpanId(), preferredReference.isSampled());
+            // 添加SW中用到的几个参数
+            sofaTracerSpanContext.setParentParams(preferredReference.getService(),
+                preferredReference.getServiceInstance(), preferredReference.getOperationName());
             sofaTracerSpanContext.addBizBaggage(this.createChildBaggage(true));
             sofaTracerSpanContext.addSysBaggage(this.createChildBaggage(false));
             return sofaTracerSpanContext;

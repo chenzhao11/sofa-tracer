@@ -37,50 +37,63 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class SofaTracerSpanContext implements SpanContext {
 
     //spanId separator
-    public static final String        RPC_ID_SEPARATOR       = ".";
+    public static final String        RPC_ID_SEPARATOR            = ".";
 
     //======================== The following is the key for serializing data ========================
 
-    private static final String       TRACE_ID_KET           = "tcid";
+    private static final String       TRACE_ID_KET                = "tcid";
 
-    private static final String       SPAN_ID_KET            = "spid";
+    private static final String       SPAN_ID_KET                 = "spid";
 
-    private static final String       PARENT_SPAN_ID_KET     = "pspid";
+    private static final String       PARENT_SPAN_ID_KET          = "pspid";
 
-    private static final String       SAMPLE_KET             = "sample";
+    private static final String       SAMPLE_KET                  = "sample";
+    private static final String       SERVICE_KET                 = "service";
+    private static final String       SERVICE_INSTANCE_KET        = "instance";
+    private static final String       OPERATION_NAME              = "opname";
+    private static final String       PARENT_SERVICE_KET          = "pservice";
+    private static final String       PARENT_SERVICE_INSTANCE_KET = "pinstance";
+    private static final String       PARENT_OPERATION_NAME       = "popname";
 
     /**
      * The serialization system transparently passes the prefix of the attribute key
      */
-    private static final String       SYS_BAGGAGE_PREFIX_KEY = "_sys_";
+    private static final String       SYS_BAGGAGE_PREFIX_KEY      = "_sys_";
 
-    private String                    traceId                = StringUtils.EMPTY_STRING;
+    private String                    traceId                     = StringUtils.EMPTY_STRING;
 
-    private String                    spanId                 = StringUtils.EMPTY_STRING;
+    private String                    spanId                      = StringUtils.EMPTY_STRING;
 
-    private String                    parentId               = StringUtils.EMPTY_STRING;
+    private String                    parentId                    = StringUtils.EMPTY_STRING;
+
+    private String                    service                     = StringUtils.EMPTY_STRING;
+    private String                    serviceInstance             = StringUtils.EMPTY_STRING;
+    private String                    operationName               = StringUtils.EMPTY_STRING;
+    private String                    parentService               = StringUtils.EMPTY_STRING;
+    private String                    parentServiceInstance       = StringUtils.EMPTY_STRING;
+    private String                    parentOperationName         = StringUtils.EMPTY_STRING;
 
     /**
      * Default will not be sampled
      */
-    private boolean                   isSampled              = false;
+    private boolean                   isSampled                   = false;
 
     /**
      * The system transparently transmits data,
      * mainly refers to the transparent transmission data of the system dimension.
      * Note that this field cannot be used for transparent transmission of business.
      */
-    private final Map<String, String> sysBaggage             = new ConcurrentHashMap<String, String>();
+    private final Map<String, String> sysBaggage                  = new ConcurrentHashMap<String, String>();
 
     /**
      * Transparent transmission of data, mainly refers to the transparent transmission data of the business
      */
-    private final Map<String, String> bizBaggage             = new ConcurrentHashMap<String, String>();
+    private final Map<String, String> bizBaggage                  = new ConcurrentHashMap<String, String>();
 
     /**
      * sub-context counter
      */
-    private AtomicInteger             childContextIndex      = new AtomicInteger(0);
+    private AtomicInteger             childContextIndex           = new AtomicInteger(0);
 
     /**
      * clone a SofaTracerSpanContext instance
@@ -92,6 +105,9 @@ public class SofaTracerSpanContext implements SpanContext {
         spanContext.addSysBaggage(this.sysBaggage);
         spanContext.addBizBaggage(this.bizBaggage);
         spanContext.childContextIndex = this.childContextIndex;
+        spanContext.setParentParams(this.parentService, this.parentServiceInstance,
+            this.parentOperationName);
+        spanContext.setParams(this.service, this.serviceInstance, this.operationName);
         return spanContext;
     }
 
@@ -115,6 +131,20 @@ public class SofaTracerSpanContext implements SpanContext {
         this.spanId = spanId;
         this.parentId = StringUtils.isBlank(parentId) ? this.genParentSpanId(spanId) : parentId;
         this.isSampled = isSampled;
+    }
+
+    // 设置其他的几个字段
+    public void setParams(String service, String serviceInstance, String operationName) {
+        this.service = service;
+        this.serviceInstance = serviceInstance;
+        this.operationName = operationName;
+    }
+
+    public void setParentParams(String parentService, String parentServiceInstance,
+                                String parentOperationName) {
+        this.parentService = parentService;
+        this.parentServiceInstance = parentServiceInstance;
+        this.parentOperationName = parentOperationName;
     }
 
     public SofaTracerSpanContext addBizBaggage(Map<String, String> bizBaggage) {
@@ -216,6 +246,20 @@ public class SofaTracerSpanContext implements SpanContext {
             .append(StringUtils.AND);
         serializedValue.append(SAMPLE_KET).append(StringUtils.EQUAL).append(isSampled)
             .append(StringUtils.AND);
+        //序列化其他的几个字段
+        serializedValue.append(SERVICE_KET).append(StringUtils.EQUAL).append(service)
+            .append(StringUtils.AND);
+        serializedValue.append(SERVICE_INSTANCE_KET).append(StringUtils.EQUAL)
+            .append(serviceInstance).append(StringUtils.AND);
+        serializedValue.append(OPERATION_NAME).append(StringUtils.EQUAL).append(operationName)
+            .append(StringUtils.AND);
+        serializedValue.append(PARENT_SERVICE_KET).append(StringUtils.EQUAL).append(parentService)
+            .append(StringUtils.AND);
+        serializedValue.append(PARENT_SERVICE_INSTANCE_KET).append(StringUtils.EQUAL)
+            .append(parentServiceInstance).append(StringUtils.AND);
+        serializedValue.append(PARENT_OPERATION_NAME).append(StringUtils.EQUAL)
+            .append(parentOperationName).append(StringUtils.AND);
+
         //system bizBaggage
         if (this.sysBaggage.size() > 0) {
             serializedValue.append(StringUtils.mapToStringWithPrefix(this.sysBaggage,
@@ -245,6 +289,15 @@ public class SofaTracerSpanContext implements SpanContext {
         String parentId = StringUtils.EMPTY_STRING;
         //sampled default is false
         boolean sampled = false;
+        //其他的几个字段
+
+        String service = StringUtils.EMPTY_STRING;
+        String serviceInstance = StringUtils.EMPTY_STRING;
+        String operationName = StringUtils.EMPTY_STRING;
+        String parentService = StringUtils.EMPTY_STRING;
+        String parentServiceInstance = StringUtils.EMPTY_STRING;
+        String parentOperationName = StringUtils.EMPTY_STRING;
+
         //sys bizBaggage
         Map<String, String> sysBaggage = new HashMap<String, String>();
         //bizBaggage
@@ -275,6 +328,30 @@ public class SofaTracerSpanContext implements SpanContext {
                 sampled = Boolean.parseBoolean(value);
                 continue;
             }
+            if (SERVICE_KET.equals(key)) {
+                service = value;
+                continue;
+            }
+            if (SERVICE_INSTANCE_KET.equals(key)) {
+                serviceInstance = value;
+                continue;
+            }
+            if (OPERATION_NAME.equals(key)) {
+                operationName = value;
+                continue;
+            }
+            if (PARENT_SERVICE_KET.equals(key)) {
+                parentService = value;
+                continue;
+            }
+            if (PARENT_SERVICE_INSTANCE_KET.equals(key)) {
+                parentServiceInstance = value;
+                continue;
+            }
+            if (PARENT_OPERATION_NAME.equals(key)) {
+                parentOperationName = value;
+                continue;
+            }
             int sysIndex = key.indexOf(SYS_BAGGAGE_PREFIX_KEY);
             if (sysIndex == 0) {
                 //must have a prefix
@@ -287,6 +364,9 @@ public class SofaTracerSpanContext implements SpanContext {
         }
         SofaTracerSpanContext sofaTracerSpanContext = new SofaTracerSpanContext(traceId, spanId,
             parentId, sampled);
+        sofaTracerSpanContext.setParams(service, serviceInstance, operationName);
+        sofaTracerSpanContext.setParentParams(parentService, parentServiceInstance,
+            parentOperationName);
         if (sysBaggage.size() > 0) {
             sofaTracerSpanContext.addSysBaggage(sysBaggage);
         }
@@ -408,6 +488,30 @@ public class SofaTracerSpanContext implements SpanContext {
      */
     public String lastChildContextId() {
         return this.spanId + RPC_ID_SEPARATOR + childContextIndex.get();
+    }
+
+    public String getService() {
+        return this.service;
+    }
+
+    public String getServiceInstance() {
+        return this.serviceInstance;
+    }
+
+    public String getOperationName() {
+        return this.operationName;
+    }
+
+    public String getParentService() {
+        return this.parentService;
+    }
+
+    public String getParentServiceInstance() {
+        return this.parentServiceInstance;
+    }
+
+    public String getParentOperationName() {
+        return this.parentOperationName;
     }
 
     @Override
