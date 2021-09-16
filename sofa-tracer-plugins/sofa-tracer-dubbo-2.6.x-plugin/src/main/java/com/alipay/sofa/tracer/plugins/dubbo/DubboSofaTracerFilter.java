@@ -122,20 +122,19 @@ public class DubboSofaTracerFilter implements Filter {
                                                                            + methodName);
         // set tags to span
         appendRpcClientSpanTags(invoker, sofaTracerSpan);
-
+//      >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         InetAddress address = NetUtils.getLocalAddress();
         String local_app = rpcContext.getUrl().getParameter(Constants.APPLICATION_KEY);
         String instance = local_app + "@" + address.getHostAddress();
-
-        // 序列化之前先设置SW中需要用的一些字段
-        sofaTracerSpan.getSofaTracerSpanContext().setParams(local_app, instance,
-            service + "#" + methodName);
         SofaTracerSpanContext parentSpanContext = sofaTracerSpan.getParentSofaTracerSpan()
             .getSofaTracerSpanContext();
         // 是不是一定能拿到parentSpan？
         sofaTracerSpan.getSofaTracerSpanContext().setParentParams(parentSpanContext.getService(),
             parentSpanContext.getServiceInstance(), parentSpanContext.getOperationName());
-
+        // 序列化之前先设置SW中需要用的一些字段
+        sofaTracerSpan.getSofaTracerSpanContext().setParams(local_app, instance,
+                service + "#" + methodName);
+//        >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         // do serialized and then transparent transmission to the rpc server
         String serializedSpanContext = sofaTracerSpan.getSofaTracerSpanContext()
             .serializeSpanContext();
@@ -288,7 +287,7 @@ public class DubboSofaTracerFilter implements Filter {
         SofaTracerSpan sofaTracerSpan = serverReceived(invocation);
         // 2
         appendRpcServerSpanTags(invoker, sofaTracerSpan);
-
+//      >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         RpcContext rpcContext = RpcContext.getContext();
         String service = invoker.getInterface().getName();
         String methodName = rpcContext.getMethodName();
@@ -303,9 +302,7 @@ public class DubboSofaTracerFilter implements Filter {
         // 序列化之前先设置SW中需要用的一些字段
         sofaTracerSpan.getSofaTracerSpanContext().setParams(local_app, instance,
             service + "#" + methodName);
-        SofaTracerSpanContext parentSpanContext = sofaTracerSpan.getParentSofaTracerSpan()
-            .getSofaTracerSpanContext();
-
+//        >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         Result result;
         Throwable exception = null;
         try {

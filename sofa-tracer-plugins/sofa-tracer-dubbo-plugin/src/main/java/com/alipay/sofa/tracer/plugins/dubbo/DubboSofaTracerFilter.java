@@ -273,8 +273,10 @@ public class DubboSofaTracerFilter implements Filter {
         String instance = local_app + "@" + address.getHostAddress();
         // 是不是一定能拿到parentSpan？ 不一定直接从context中取
         SofaTracerSpanContext spanContext = sofaTracerSpan.getSofaTracerSpanContext();
-        spanContext.setParentParams(spanContext.getParentService(),
-            spanContext.getParentServiceInstance(), spanContext.getParentOperationName());
+        //        spanContext.setParentParams(spanContext.getParentService(),
+        //            spanContext.getParentServiceInstance(), spanContext.getParentOperationName());
+        spanContext.setParentParams(spanContext.getService(), spanContext.getServiceInstance(),
+            spanContext.getOperationName());
         // 序列化之前先设置SW中需要用的一些字段
         spanContext.setParams(local_app, instance, service + "#" + methodName);
 

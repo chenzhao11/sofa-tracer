@@ -40,13 +40,16 @@ import com.alipay.common.tracer.core.samplers.Sampler;
 import com.alipay.common.tracer.core.span.CommonSpanTags;
 import com.alipay.common.tracer.core.span.LogData;
 import com.alipay.common.tracer.core.span.SofaTracerSpan;
+import com.alipay.common.tracer.core.utils.NetUtils;
 import com.alipay.common.tracer.core.utils.StringUtils;
 import com.alipay.sofa.common.code.LogCode2Description;
 import com.alipay.sofa.tracer.plugins.dubbo.constants.AttachmentKeyConstants;
 import com.alipay.sofa.tracer.plugins.dubbo.tracer.DubboConsumerSofaTracer;
 import com.alipay.sofa.tracer.plugins.dubbo.tracer.DubboProviderSofaTracer;
 import io.opentracing.tag.Tags;
+import org.apache.dubbo.common.constants.CommonConstants;
 
+import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -119,6 +122,21 @@ public class DubboSofaTracerFilter implements Filter {
                                                                            + methodName);
         // set tags to span
         appendRpcClientSpanTags(invoker, sofaTracerSpan);
+//      >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        InetAddress address = NetUtils.getLocalAddress();
+        String local_app =rpcContext.getUrl().getParameter(Constants.APPLICATION_KEY);
+        String instance = local_app + "@" + address.getHostAddress();
+
+        // 序列化之前先设置SW中需要用的一些字段
+        sofaTracerSpan.getSofaTracerSpanContext().setParams(local_app, instance, service + "#" + methodName);
+        SofaTracerSpanContext parentSpanContext = sofaTracerSpan.getParentSofaTracerSpan().getSofaTracerSpanContext();
+
+        // 是不是一定能拿到parentSpan？ 不一定直接从context中取， 这里色sofaTracerSpan是clientSend返回的新的span，是没有信息的
+        // 因为是client所以一定是有ref的
+        sofaTracerSpan.getSofaTracerSpanContext().setParentParams(parentSpanContext.getService(), parentSpanContext.getServiceInstance(),
+                parentSpanContext.getOperationName());
+//      >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
         // do serialized and then transparent transmission to the rpc server
         String serializedSpanContext = sofaTracerSpan.getSofaTracerSpanContext()
             .serializeSpanContext();
@@ -274,6 +292,22 @@ public class DubboSofaTracerFilter implements Filter {
         }
         SofaTracerSpan sofaTracerSpan = serverReceived(invocation);
         appendRpcServerSpanTags(invoker, sofaTracerSpan);
+//        >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        org.apache.dubbo.rpc.RpcContext rpcContext = org.apache.dubbo.rpc.RpcContext.getContext();
+        String service = invoker.getInterface().getName();
+        String methodName = rpcContext.getMethodName();
+        InetAddress address = NetUtils.getLocalAddress();
+        String local_app = rpcContext.getUrl().getParameter(Constants.APPLICATION_KEY);
+        String instance = local_app + "@" + address.getHostAddress();
+        // 是不是一定能拿到parentSpan？ 不一定直接从context中取
+        SofaTracerSpanContext spanContext = sofaTracerSpan.getSofaTracerSpanContext();
+        //        spanContext.setParentParams(spanContext.getParentService(),
+        //            spanContext.getParentServiceInstance(), spanContext.getParentOperationName());
+        spanContext.setParentParams(spanContext.getService(), spanContext.getServiceInstance(),
+                spanContext.getOperationName());
+        // 序列化之前先设置SW中需要用的一些字段
+        spanContext.setParams(local_app, instance, service + "#" + methodName);
+//        >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         Result result;
         Throwable exception = null;
         try {

@@ -355,7 +355,8 @@ public class SofaTracer implements Tracer {
             SofaTracerSpanContext sofaTracerSpanContext = new SofaTracerSpanContext(
                 preferredReference.getTraceId(), preferredReference.nextChildContextId(),
                 preferredReference.getSpanId(), preferredReference.isSampled());
-            // 添加SW中用到的几个参数
+            // 添加SW中用到的几个参数,在拓扑图构建过程中再分析EXitSpan的时候不会分析segmentRef，在Dubbo中有自己的
+            // 处理逻辑
             sofaTracerSpanContext.setParentParams(preferredReference.getService(),
                 preferredReference.getServiceInstance(), preferredReference.getOperationName());
             sofaTracerSpanContext.addBizBaggage(this.createChildBaggage(true));
