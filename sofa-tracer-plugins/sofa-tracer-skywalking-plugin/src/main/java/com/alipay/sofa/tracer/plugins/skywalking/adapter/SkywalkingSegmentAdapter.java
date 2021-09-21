@@ -72,8 +72,13 @@ public class SkywalkingSegmentAdapter {
      * @return segmentId
      */
     private String generateSegmentId(SofaTracerSpan sofaTracerSpan) {
-        return sofaTracerSpan.getSofaTracerSpanContext().getTraceId()
-               + FNV64HashCode(sofaTracerSpan.getSofaTracerSpanContext().getSpanId())
+        String prefix = sofaTracerSpan.getSofaTracerSpanContext().getTraceId()
+                        + FNV64HashCode(sofaTracerSpan.getSofaTracerSpanContext().getSpanId());
+        // when tracerType equals flexible-biz, span kind is always client
+        if (sofaTracerSpan.getSofaTracer().getTracerType().equals(ComponentNameConstants.FLEXIBLE)) {
+            return prefix + SofaTracerConstant.SERVER;
+        }
+        return prefix
                + (sofaTracerSpan.isServer() ? SofaTracerConstant.SERVER : SofaTracerConstant.CLIENT);
     }
 
@@ -101,8 +106,7 @@ public class SkywalkingSegmentAdapter {
 
         //map tracerType in sofaTracer to ComponentId in skyWalking
         span.setComponentId(getComponentId(sofaTracerSpan));
-        span.setError(!isWebHttpClientSuccess(sofaTracerSpan.getTagsWithStr().get(
-            CommonSpanTags.RESULT_CODE)));
+        span.setError(sofaTracerSpan.getTagsWithStr().containsKey("error"));
         span.setSkipAnalysis(false);
         span = convertSpanTags(sofaTracerSpan, span);
         convertSpanLogs(sofaTracerSpan, span);
@@ -270,17 +274,17 @@ public class SkywalkingSegmentAdapter {
 
     }
 
-    private boolean isHttpOrMvcSuccess(String resultCode) {
-        return resultCode.charAt(0) == '1' || resultCode.charAt(0) == '2'
-               || "302".equals(resultCode.trim()) || ("301".equals(resultCode.trim()));
-    }
-
-    private boolean isWebHttpClientSuccess(String resultCode) {
-        return StringUtils.isNotBlank(resultCode)
-               && (isHttpOrMvcSuccess(resultCode) || SofaTracerConstant.RESULT_CODE_SUCCESS
-                   .equals(resultCode));
-    }
-
+    //    private boolean isHttpOrMvcSuccess(String resultCode) {
+    //        return resultCode.charAt(0) == '1' || resultCode.charAt(0) == '2'
+    //               || "302".equals(resultCode.trim()) || ("301".equals(resultCode.trim()))
+    //                || "success".equalsIgnoreCase(resultCode);
+    //    }
+    //
+    //    private boolean isWebHttpClientSuccess(String resultCode) {
+    //        return StringUtils.isNotBlank(resultCode)
+    //               && (isHttpOrMvcSuccess(resultCode) || SofaTracerConstant.RESULT_CODE_SUCCESS
+    //                   .equals(resultCode));
+    //    }
     /**
      * from http://en.wikipedia.org/wiki/Fowler_Noll_Vo_hash
      *

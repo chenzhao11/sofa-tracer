@@ -180,13 +180,6 @@ public class SofaTracerSpan implements Span {
             return this;
         }
         this.tagsWithStr.put(key, value);
-        // 判断如果是local.app应该修改本身的参数
-        if (key.equals(CommonSpanTags.LOCAL_APP)) {
-            InetAddress localIpAddress = NetUtils.getLocalAddress();
-            String instance = value + "@" + localIpAddress.getHostAddress();
-            this.sofaTracerSpanContext.setParams(value, instance, operationName);
-        }
-
         //to set log type by span kind type
         if (isServer()) {
             Reporter serverReporter = this.sofaTracer.getServerReporter();

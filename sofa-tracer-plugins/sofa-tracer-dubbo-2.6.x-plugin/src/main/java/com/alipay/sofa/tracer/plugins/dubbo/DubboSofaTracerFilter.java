@@ -117,24 +117,20 @@ public class DubboSofaTracerFilter implements Filter {
         String methodName = rpcContext.getMethodName();
         // get service interface
         String service = invoker.getInterface().getSimpleName();
-        // build a dubbo rpc span  新创建的一个span，这个span的ref中肯定是有数据的
+        // build a dubbo rpc span
         SofaTracerSpan sofaTracerSpan = dubboConsumerSofaTracer.clientSend(service + "#"
                                                                            + methodName);
         // set tags to span
         appendRpcClientSpanTags(invoker, sofaTracerSpan);
-//      >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         InetAddress address = NetUtils.getLocalAddress();
         String local_app = rpcContext.getUrl().getParameter(Constants.APPLICATION_KEY);
         String instance = local_app + "@" + address.getHostAddress();
         SofaTracerSpanContext parentSpanContext = sofaTracerSpan.getParentSofaTracerSpan()
             .getSofaTracerSpanContext();
-        // 是不是一定能拿到parentSpan？
         sofaTracerSpan.getSofaTracerSpanContext().setParentParams(parentSpanContext.getService(),
             parentSpanContext.getServiceInstance(), parentSpanContext.getOperationName());
-        // 序列化之前先设置SW中需要用的一些字段
         sofaTracerSpan.getSofaTracerSpanContext().setParams(local_app, instance,
-                service + "#" + methodName);
-//        >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+            service + "#" + methodName);
         // do serialized and then transparent transmission to the rpc server
         String serializedSpanContext = sofaTracerSpan.getSofaTracerSpanContext()
             .serializeSpanContext();
@@ -283,26 +279,19 @@ public class DubboSofaTracerFilter implements Filter {
             this.dubboProviderSofaTracer = DubboProviderSofaTracer
                 .getDubboProviderSofaTracerSingleton();
         }
-        // 1
         SofaTracerSpan sofaTracerSpan = serverReceived(invocation);
-        // 2
         appendRpcServerSpanTags(invoker, sofaTracerSpan);
-//      >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         RpcContext rpcContext = RpcContext.getContext();
         String service = invoker.getInterface().getName();
         String methodName = rpcContext.getMethodName();
         InetAddress address = NetUtils.getLocalAddress();
         String local_app = rpcContext.getUrl().getParameter(Constants.APPLICATION_KEY);
         String instance = local_app + "@" + address.getHostAddress();
-        // 是不是一定能拿到parentSpan？ 不一定直接从context中取
         SofaTracerSpanContext spanContext = sofaTracerSpan.getSofaTracerSpanContext();
         spanContext.setParentParams(spanContext.getService(), spanContext.getServiceInstance(),
             spanContext.getOperationName());
-
-        // 序列化之前先设置SW中需要用的一些字段
         sofaTracerSpan.getSofaTracerSpanContext().setParams(local_app, instance,
             service + "#" + methodName);
-//        >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         Result result;
         Throwable exception = null;
         try {

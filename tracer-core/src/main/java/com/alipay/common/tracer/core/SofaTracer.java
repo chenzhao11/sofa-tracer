@@ -17,6 +17,7 @@
 package com.alipay.common.tracer.core;
 
 import com.alipay.common.tracer.core.appender.self.SelfLog;
+import com.alipay.common.tracer.core.configuration.SofaTracerConfiguration;
 import com.alipay.common.tracer.core.constants.ComponentNameConstants;
 import com.alipay.common.tracer.core.context.span.SofaTracerSpanContext;
 import com.alipay.common.tracer.core.generator.TraceIdGenerator;
@@ -88,6 +89,9 @@ public class SofaTracer implements Tracer {
      * Sampler instance
      */
     private final Sampler             sampler;
+
+    private String                    appName      = StringUtils.EMPTY_STRING;
+    private String                    instance     = StringUtils.EMPTY_STRING;
 
     protected SofaTracer(String tracerType, Reporter clientReporter, Reporter serverReporter,
                          Sampler sampler, Map<String, Object> tracerTags) {
@@ -309,15 +313,15 @@ public class SofaTracer implements Tracer {
             long begin = this.startTime > 0 ? this.startTime : System.currentTimeMillis();
             SofaTracerSpan sofaTracerSpan = new SofaTracerSpan(SofaTracer.this, begin,
                 this.references, this.operationName, sofaTracerSpanContext, this.tags);
-
-            //如果已经有local.app可以设置spanContext的参数
-            if (tags.containsKey(CommonSpanTags.LOCAL_APP)) {
-                String service = (String) tags.get(CommonSpanTags.LOCAL_APP);
-                InetAddress address = NetUtils.getLocalAddress();
-                String instance = service + "@" + address.getHostAddress();
-                sofaTracerSpanContext.setParams(service, instance, operationName);
+            if ((StringUtils.isBlank(SofaTracer.this.appName) || StringUtils
+                .isBlank(SofaTracer.this.instance))) {
+                SofaTracer.this.appName = SofaTracerConfiguration
+                    .getProperty(SofaTracerConfiguration.TRACER_APPNAME_KEY);
+                SofaTracer.this.instance = SofaTracer.this.appName + "@"
+                                           + NetUtils.getLocalAddress().getHostAddress();
             }
-
+            sofaTracerSpanContext.setParams(SofaTracer.this.appName, SofaTracer.this.instance,
+                this.operationName);
             // calculate isSampled，but do not change parent's sampler behaviour
             boolean isSampled = calculateSampler(sofaTracerSpan);
             sofaTracerSpanContext.setSampled(isSampled);
@@ -355,8 +359,6 @@ public class SofaTracer implements Tracer {
             SofaTracerSpanContext sofaTracerSpanContext = new SofaTracerSpanContext(
                 preferredReference.getTraceId(), preferredReference.nextChildContextId(),
                 preferredReference.getSpanId(), preferredReference.isSampled());
-            // 添加SW中用到的几个参数,在拓扑图构建过程中再分析EXitSpan的时候不会分析segmentRef，在Dubbo中有自己的
-            // 处理逻辑
             sofaTracerSpanContext.setParentParams(preferredReference.getService(),
                 preferredReference.getServiceInstance(), preferredReference.getOperationName());
             sofaTracerSpanContext.addBizBaggage(this.createChildBaggage(true));

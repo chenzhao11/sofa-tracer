@@ -133,7 +133,6 @@ public class SofaTracerSpanContext implements SpanContext {
         this.isSampled = isSampled;
     }
 
-    // 设置其他的几个字段
     public void setParams(String service, String serviceInstance, String operationName) {
         this.service = service;
         this.serviceInstance = serviceInstance;
@@ -246,7 +245,6 @@ public class SofaTracerSpanContext implements SpanContext {
             .append(StringUtils.AND);
         serializedValue.append(SAMPLE_KET).append(StringUtils.EQUAL).append(isSampled)
             .append(StringUtils.AND);
-        //序列化其他的几个字段
         serializedValue.append(SERVICE_KET).append(StringUtils.EQUAL).append(service)
             .append(StringUtils.AND);
         serializedValue.append(SERVICE_INSTANCE_KET).append(StringUtils.EQUAL)
@@ -289,7 +287,6 @@ public class SofaTracerSpanContext implements SpanContext {
         String parentId = StringUtils.EMPTY_STRING;
         //sampled default is false
         boolean sampled = false;
-        //其他的几个字段
 
         String service = StringUtils.EMPTY_STRING;
         String serviceInstance = StringUtils.EMPTY_STRING;
