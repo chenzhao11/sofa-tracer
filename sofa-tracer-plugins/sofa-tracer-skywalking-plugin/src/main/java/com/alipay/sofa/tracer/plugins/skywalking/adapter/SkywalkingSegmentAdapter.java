@@ -274,17 +274,6 @@ public class SkywalkingSegmentAdapter {
 
     }
 
-    //    private boolean isHttpOrMvcSuccess(String resultCode) {
-    //        return resultCode.charAt(0) == '1' || resultCode.charAt(0) == '2'
-    //               || "302".equals(resultCode.trim()) || ("301".equals(resultCode.trim()))
-    //                || "success".equalsIgnoreCase(resultCode);
-    //    }
-    //
-    //    private boolean isWebHttpClientSuccess(String resultCode) {
-    //        return StringUtils.isNotBlank(resultCode)
-    //               && (isHttpOrMvcSuccess(resultCode) || SofaTracerConstant.RESULT_CODE_SUCCESS
-    //                   .equals(resultCode));
-    //    }
     /**
      * from http://en.wikipedia.org/wiki/Fowler_Noll_Vo_hash
      *

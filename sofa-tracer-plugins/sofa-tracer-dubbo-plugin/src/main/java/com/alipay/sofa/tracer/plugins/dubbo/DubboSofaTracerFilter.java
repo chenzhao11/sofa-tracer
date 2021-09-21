@@ -16,7 +16,6 @@
  */
 package com.alipay.sofa.tracer.plugins.dubbo;
 
-import com.alibaba.dubbo.common.Constants;
 import com.alipay.common.tracer.core.appender.self.SelfLog;
 import com.alipay.common.tracer.core.configuration.SofaTracerConfiguration;
 import com.alipay.common.tracer.core.constants.SofaTracerConstant;
@@ -304,7 +303,6 @@ public class DubboSofaTracerFilter implements Filter {
     private SofaTracerSpan serverReceived(Invocation invocation) {
         Map<String, String> tags = new HashMap<>();
         tags.put(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER);
-        // 解析client传递过来的spanContext
         String serializeSpanContext = invocation.getAttachments()
             .get(CommonSpanTags.RPC_TRACE_NAME);
         SofaTracerSpanContext sofaTracerSpanContext = SofaTracerSpanContext
@@ -390,7 +388,6 @@ public class DubboSofaTracerFilter implements Filter {
      * @param sofaTracerSpan
      */
     private void appendRpcServerSpanTags(Invoker<?> invoker, SofaTracerSpan sofaTracerSpan) {
-        // RPC的serverSpan和clientSpan虽然两者的spanContext相同但是两者的span是不同的
         if (sofaTracerSpan == null) {
             return;
         }

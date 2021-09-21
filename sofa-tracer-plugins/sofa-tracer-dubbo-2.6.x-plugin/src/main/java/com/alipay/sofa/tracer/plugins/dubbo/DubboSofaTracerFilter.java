@@ -47,7 +47,6 @@ import com.alipay.sofa.tracer.plugins.dubbo.constants.AttachmentKeyConstants;
 import com.alipay.sofa.tracer.plugins.dubbo.tracer.DubboConsumerSofaTracer;
 import com.alipay.sofa.tracer.plugins.dubbo.tracer.DubboProviderSofaTracer;
 import io.opentracing.tag.Tags;
-import sun.nio.ch.Net;
 
 import java.net.InetAddress;
 import java.util.HashMap;
