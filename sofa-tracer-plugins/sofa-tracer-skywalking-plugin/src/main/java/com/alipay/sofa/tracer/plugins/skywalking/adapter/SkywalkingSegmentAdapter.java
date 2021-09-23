@@ -114,7 +114,6 @@ public class SkywalkingSegmentAdapter {
         if (!StringUtils.isBlank(sofaTracerSpan.getSofaTracerSpanContext().getParentId())) {
             span = addSegmentReference(sofaTracerSpan, span);
         }
-        // Dubbo
         String remoteHost = sofaTracerSpan.getTagsWithStr().get(CommonSpanTags.REMOTE_HOST);
         String remotePort = sofaTracerSpan.getTagsWithStr().get(CommonSpanTags.REMOTE_PORT);
         // sofaRpc
