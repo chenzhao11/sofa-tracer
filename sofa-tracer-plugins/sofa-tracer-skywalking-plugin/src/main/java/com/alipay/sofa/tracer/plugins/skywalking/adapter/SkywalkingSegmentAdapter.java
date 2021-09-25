@@ -33,6 +33,7 @@ import com.alipay.sofa.tracer.plugins.skywalking.model.Log;
 import com.alipay.sofa.tracer.plugins.skywalking.model.RefType;
 import com.alipay.sofa.tracer.plugins.skywalking.utils.ComponentName2ComponentId;
 import com.alipay.sofa.tracer.plugins.skywalking.utils.ComponentName2SpanLayer;
+import io.opentracing.tag.Tags;
 
 import java.net.InetAddress;
 import java.util.LinkedHashMap;
@@ -118,9 +119,15 @@ public class SkywalkingSegmentAdapter {
         String remotePort = sofaTracerSpan.getTagsWithStr().get(CommonSpanTags.REMOTE_PORT);
         // sofaRpc
         String remoteIp = sofaTracerSpan.getTagsWithStr().get("remote.ip");
-
+        // mongodb
+        String peerHost = sofaTracerSpan.getTagsWithStr().get(Tags.PEER_HOSTNAME.getKey());
+        String peerPort = String.valueOf(sofaTracerSpan.getTagsWithNumber().get(
+            Tags.PEER_PORT.getKey()));
         if (remoteHost != null && remotePort != null) {
             span.setPeer(remoteHost + ":" + remotePort);
+        }
+        if (peerHost != null && peerPort != null) {
+            span.setPeer(peerHost + ":" + peerPort);
         }
         // if the span is formed by sofaRPC, we can only get  ip of the server  to generate networkAddressUsedAtPeer
         if (sofaTracerSpan.getSofaTracer().getTracerType().equals(ComponentNameConstants.SOFA_RPC)

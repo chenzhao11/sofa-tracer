@@ -21,11 +21,14 @@ import com.alipay.common.tracer.core.constants.SofaTracerConstant;
 import com.alipay.common.tracer.core.context.span.SofaTracerSpanContext;
 import com.alipay.common.tracer.core.span.CommonSpanTags;
 import com.alipay.common.tracer.core.span.SofaTracerSpan;
+import com.alipay.common.tracer.core.tags.SpanTags;
 import com.alipay.sofa.tracer.plugins.rocketmq.tracers.RocketMQConsumeTracer;
 import org.apache.rocketmq.client.hook.ConsumeMessageContext;
 import org.apache.rocketmq.client.hook.ConsumeMessageHook;
 import org.apache.rocketmq.common.message.MessageExt;
 import org.apache.rocketmq.common.message.MessageQueue;
+
+import java.net.SocketAddress;
 
 /**
  * @author: guolei.sgl (guolei.sgl@antfin.com) 2019/12/12 8:22 PM
@@ -87,5 +90,8 @@ public class SofaTracerConsumeMessageHook implements ConsumeMessageHook {
         span.setTag("broker", brokerName);
         span.setTag(CommonSpanTags.MSG_ID, msg.getMsgId());
         span.setTag("status", context.getStatus());
+        String[] remote = msg.getStoreHost().toString().split(":");
+        span.setTag(CommonSpanTags.REMOTE_HOST, remote[0]);
+        span.setTag(CommonSpanTags.REMOTE_PORT, remote[1]);
     }
 }

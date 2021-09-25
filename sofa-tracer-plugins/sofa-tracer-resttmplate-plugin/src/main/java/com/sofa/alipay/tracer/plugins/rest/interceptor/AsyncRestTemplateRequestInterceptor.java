@@ -17,12 +17,14 @@
 package com.sofa.alipay.tracer.plugins.rest.interceptor;
 
 import com.alipay.common.tracer.core.SofaTracer;
+import com.alipay.common.tracer.core.appender.self.SelfLog;
 import com.alipay.common.tracer.core.configuration.SofaTracerConfiguration;
 import com.alipay.common.tracer.core.holder.SofaTraceContextHolder;
 import com.alipay.common.tracer.core.registry.ExtendFormat;
 import com.alipay.common.tracer.core.span.CommonSpanTags;
 import com.alipay.common.tracer.core.span.SofaTracerSpan;
 import com.alipay.common.tracer.core.tracer.AbstractTracer;
+import com.alipay.common.tracer.core.utils.NetUtils;
 import com.alipay.common.tracer.core.utils.StringUtils;
 import com.sofa.alipay.tracer.plugins.rest.RestTemplateRequestCarrier;
 import io.opentracing.tag.Tags;
@@ -35,6 +37,8 @@ import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.List;
 
 /**
@@ -163,6 +167,11 @@ public class AsyncRestTemplateRequestInterceptor implements AsyncClientHttpReque
         //targetAppName
         sofaTracerSpan.setTag(CommonSpanTags.REMOTE_APP, StringUtils.EMPTY_STRING);
         sofaTracerSpan.setTag(CommonSpanTags.REQUEST_URL, request.getURI().toString());
+        InetAddress ipAddress = NetUtils.getIpAddress(request.getURI().getHost());
+        sofaTracerSpan.setTag(CommonSpanTags.REMOTE_HOST, ipAddress == null ? request.getURI()
+            .getHost() : ipAddress.getHostAddress());
+        sofaTracerSpan.setTag(CommonSpanTags.REMOTE_PORT,
+            String.valueOf(request.getURI().getPort()));
         //method
         sofaTracerSpan.setTag(CommonSpanTags.METHOD, methodName);
         HttpHeaders headers = request.getHeaders();

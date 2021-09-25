@@ -22,6 +22,7 @@ import com.alipay.common.tracer.core.configuration.SofaTracerConfiguration;
 import com.alipay.common.tracer.core.registry.ExtendFormat;
 import com.alipay.common.tracer.core.span.CommonSpanTags;
 import com.alipay.common.tracer.core.span.SofaTracerSpan;
+import com.alipay.common.tracer.core.utils.NetUtils;
 import com.alipay.common.tracer.core.utils.StringUtils;
 import com.alipay.sofa.tracer.plugins.springcloud.carriers.FeignRequestCarrier;
 import com.alipay.sofa.tracer.plugins.springcloud.tracers.FeignClientTracer;
@@ -30,6 +31,7 @@ import feign.Request;
 import feign.Response;
 import io.opentracing.tag.Tags;
 
+import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.LinkedHashMap;
@@ -103,7 +105,9 @@ public class SofaTracerFeignClient implements Client {
         } catch (MalformedURLException e) {
             SelfLog.error("cannot parse remote host and port. request:" + request.url(), e);
         }
-        hostWithPort[0] = requestUrl != null ? requestUrl.getHost() : "";
+        InetAddress ipAddress = NetUtils.getIpAddress(requestUrl.getHost());
+        hostWithPort[0] = requestUrl != null ? (ipAddress != null ? ipAddress.getHostAddress()
+            : requestUrl.getHost()) : "";
         hostWithPort[1] = String.valueOf(requestUrl != null ? requestUrl.getPort() : -1);
         return hostWithPort;
     }
