@@ -167,11 +167,6 @@ public class AsyncRestTemplateRequestInterceptor implements AsyncClientHttpReque
         //targetAppName
         sofaTracerSpan.setTag(CommonSpanTags.REMOTE_APP, StringUtils.EMPTY_STRING);
         sofaTracerSpan.setTag(CommonSpanTags.REQUEST_URL, request.getURI().toString());
-        InetAddress ipAddress = NetUtils.getIpAddress(request.getURI().getHost());
-        sofaTracerSpan.setTag(CommonSpanTags.REMOTE_HOST, ipAddress == null ? request.getURI()
-            .getHost() : ipAddress.getHostAddress());
-        sofaTracerSpan.setTag(CommonSpanTags.REMOTE_PORT,
-            String.valueOf(request.getURI().getPort()));
         //method
         sofaTracerSpan.setTag(CommonSpanTags.METHOD, methodName);
         HttpHeaders headers = request.getHeaders();

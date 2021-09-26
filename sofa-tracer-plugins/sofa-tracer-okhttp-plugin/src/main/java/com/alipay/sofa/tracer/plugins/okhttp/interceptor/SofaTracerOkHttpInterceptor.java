@@ -75,10 +75,6 @@ public class SofaTracerOkHttpInterceptor implements okhttp3.Interceptor {
         sofaTracerSpan.setTag(CommonSpanTags.LOCAL_APP, appName == null ? StringUtils.EMPTY_STRING
             : appName);
         sofaTracerSpan.setTag(CommonSpanTags.REQUEST_URL, request.url().toString());
-        InetAddress ipAddress = NetUtils.getIpAddress(request.url().host());
-        sofaTracerSpan.setTag(CommonSpanTags.REMOTE_HOST, ipAddress == null ? request.url().host()
-            : ipAddress.getHostAddress());
-        sofaTracerSpan.setTag(CommonSpanTags.REMOTE_PORT, String.valueOf(request.url().port()));
         //method
         sofaTracerSpan.setTag(CommonSpanTags.METHOD, methodName);
 

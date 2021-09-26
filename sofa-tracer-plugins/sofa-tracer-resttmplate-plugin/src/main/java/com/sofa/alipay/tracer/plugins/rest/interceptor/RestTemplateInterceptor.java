@@ -128,11 +128,6 @@ public class RestTemplateInterceptor implements ClientHttpRequestInterceptor {
         sofaTracerSpan.setTag(CommonSpanTags.REQUEST_URL, request.getURI().toString());
         //method
         sofaTracerSpan.setTag(CommonSpanTags.METHOD, methodName);
-        InetAddress ipAddress = NetUtils.getIpAddress(request.getURI().getHost());
-        sofaTracerSpan.setTag(CommonSpanTags.REMOTE_HOST, ipAddress == null ? request.getURI()
-            .getHost() : ipAddress.getHostAddress());
-        sofaTracerSpan.setTag(CommonSpanTags.REMOTE_PORT,
-            String.valueOf(request.getURI().getPort()));
         HttpHeaders headers = request.getHeaders();
         //reqSize
         if (headers != null && headers.containsKey("Content-Length")) {
